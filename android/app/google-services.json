@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "696907137561",
+    "project_id": "iscmentor-339716",
+    "storage_bucket": "iscmentor-339716.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:696907137561:android:f7b240ae599d646bdae088",
+        "android_client_info": {
+          "package_name": "com.example.student_notes"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "696907137561-i6effp8d84jpfntjudm0jq9rb6n4vetr.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.student_notes",
+            "certificate_hash": "debb2e4fa9f745baee5193e3a2dd86de5d16856c"
+          }
+        },
+        {
+          "client_id": "696907137561-maregedv1ammdub7s2q4r80q9bs6c5uh.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDiwxZPNAdMGMRix2ByYGLrsC9tO_wzjb4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "696907137561-maregedv1ammdub7s2q4r80q9bs6c5uh.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
