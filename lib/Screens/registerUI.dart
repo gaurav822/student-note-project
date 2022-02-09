@@ -8,7 +8,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:progress_state_button/iconed_button.dart';
 import 'package:progress_state_button/progress_button.dart';
 import 'package:student_notes/Api/authhelper.dart';
-import 'package:student_notes/Utils/colors.dart';
 import 'package:student_notes/Widgets/custom_textfield.dart';
 
 class RegistrationScreen extends StatefulWidget {
@@ -57,160 +56,209 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
       },
       child: SafeArea(
         child: Scaffold(
-            backgroundColor: backColor,
             body: Form(
-              key: _formKey,
-              child: SingleChildScrollView(
-                child: Container(
-                  child: Column(
+          key: _formKey,
+          child: SingleChildScrollView(
+            child: Container(
+              child: Column(
+                children: [
+                  SizedBox(
+                    height: 40,
+                  ),
+                  Row(
                     children: [
                       SizedBox(
-                        height: 40,
+                        width: 50,
                       ),
-                      Row(
-                        children: [
-                          SizedBox(
-                            width: 50,
-                          ),
-                          Text("Learn & Smash.",
-                              style: GoogleFonts.ubuntu(
-                                textStyle: TextStyle(
-                                    color: Colors.white, fontSize: 28),
-                              ))
-                        ],
+                      Text("Learn & Smash.",
+                          style: GoogleFonts.ubuntu(
+                            textStyle: TextStyle(fontSize: 28),
+                          ))
+                    ],
+                  ),
+                  SizedBox(
+                    height: 40,
+                  ),
+                  Column(children: [
+                    CustomTextField(
+                      valfunction: (String value) {
+                        if (value.isEmpty) {
+                          return "This Field is Required";
+                        } else if (value.length > 30) {
+                          return "username can have maximum 30 character";
+                        } else if (value.length < 6) {
+                          return "username must have minimum 6 character";
+                        }
+                      },
+                      textEditingController: usernameController,
+                      label: "username",
+                      prefixIcon: Icon(
+                        FontAwesomeIcons.userAlt,
                       ),
-                      SizedBox(
-                        height: 40,
+                    ),
+                    SizedBox(
+                      height: 20,
+                    ),
+                    CustomTextField(
+                      valfunction: (String value) {
+                        if (value.isEmpty) {
+                          return "This Field is Required";
+                        }
+                      },
+                      textEditingController: nameController,
+                      label: "Full Name",
+                      prefixIcon: Icon(
+                        FontAwesomeIcons.userEdit,
                       ),
-                      Column(children: [
-                        CustomTextField(
-                          valfunction: (String value) {
-                            if (value.isEmpty) {
-                              return "This Field is Required";
-                            } else if (value.length > 30) {
-                              return "username can have maximum 30 character";
-                            } else if (value.length < 6) {
-                              return "username must have minimum 6 character";
-                            }
-                          },
-                          textEditingController: usernameController,
-                          label: "username",
-                          prefixIcon: Icon(
-                            FontAwesomeIcons.userAlt,
-                            color: Colors.white,
-                          ),
-                        ),
-                        SizedBox(
-                          height: 20,
-                        ),
-                        CustomTextField(
-                          valfunction: (String value) {
-                            if (value.isEmpty) {
-                              return "This Field is Required";
-                            }
-                          },
-                          textEditingController: nameController,
-                          label: "Full Name",
-                          prefixIcon: Icon(
-                            FontAwesomeIcons.userEdit,
-                            color: Colors.white,
-                          ),
-                        ),
-                        SizedBox(
-                          height: 20,
-                        ),
-                        CustomTextField(
-                          valfunction: (String value) {
-                            if (value.isEmpty) {
-                              return "This Field is Required";
-                            } else if (!value.isEmail) {
-                              return "Invalid Email Address";
-                            }
-                          },
-                          textEditingController: emailController,
-                          label: "Email Address",
-                          prefixIcon: Icon(
-                            Icons.mail,
-                            color: Colors.white,
-                          ),
-                        ),
-                        SizedBox(
-                          height: 20,
-                        ),
-                        CustomTextField(
-                          valfunction: (String value) {
-                            if (value.isEmpty) {
-                              return "This Field is Required";
-                            } else if (value.length > 20) {
-                              return "Invalid Phone Number";
-                            }
-                          },
-                          textEditingController: phoneController,
-                          label: "Phone number",
-                          prefixIcon: CountryCodePicker(
-                            onChanged: (e) {
-                              setState(() {
-                                countryCode = e.toString();
-                              });
-                            },
+                    ),
+                    SizedBox(
+                      height: 20,
+                    ),
+                    CustomTextField(
+                      valfunction: (String value) {
+                        if (value.isEmpty) {
+                          return "This Field is Required";
+                        } else if (!value.isEmail) {
+                          return "Invalid Email Address";
+                        }
+                      },
+                      textEditingController: emailController,
+                      label: "Email Address",
+                      prefixIcon: Icon(
+                        Icons.mail,
+                      ),
+                    ),
+                    SizedBox(
+                      height: 20,
+                    ),
+                    CustomTextField(
+                      valfunction: (String value) {
+                        if (value.isEmpty) {
+                          return "This Field is Required";
+                        } else if (value.length > 20) {
+                          return "Invalid Phone Number";
+                        }
+                      },
+                      textEditingController: phoneController,
+                      label: "Phone number",
+                      prefixIcon: CountryCodePicker(
+                        onChanged: (e) {
+                          setState(() {
+                            countryCode = e.toString();
+                          });
+                        },
 
-                            // Initial selection and favorite can be one of code ('IT') OR dial_code('+39')
-                            initialSelection: 'NP',
-                            textStyle: TextStyle(
-                                color: Colors.white,
-                                fontSize: 16,
-                                fontWeight: FontWeight.w500),
-                            favorite: ['+977', 'NP'],
-                            // optional. Shows only country name and flag
-                            showCountryOnly: false,
-                            // optional. Shows only country name and flag when popup is closed.
-                            showOnlyCountryWhenClosed: false,
-                            // optional. aligns the flag and the Text left
-                            alignLeft: false,
-                          ),
+                        // Initial selection and favorite can be one of code ('IT') OR dial_code('+39')
+                        initialSelection: 'NP',
+                        textStyle: TextStyle(
+                            color: Colors.grey,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500),
+                        favorite: ['+977', 'NP'],
+
+                        // optional. Shows only country name and flag
+                        showCountryOnly: false,
+                        // optional. Shows only country name and flag when popup is closed.
+                        showOnlyCountryWhenClosed: false,
+                        // optional. aligns the flag and the Text left
+                        alignLeft: false,
+                      ),
+                    ),
+                    SizedBox(
+                      height: 20,
+                    ),
+                    CustomTextField(
+                        valfunction: passwordValidator,
+                        textEditingController: passwordController,
+                        label: "Password",
+                        obsecure: !_showpass,
+                        onchanged: (val) => password = val,
+                        prefixIcon: Icon(
+                          Icons.lock,
                         ),
-                        SizedBox(
-                          height: 20,
-                        ),
-                        CustomTextField(
-                            valfunction: passwordValidator,
-                            textEditingController: passwordController,
-                            label: "Password",
-                            obsecure: !_showpass,
-                            onchanged: (val) => password = val,
+                        suffixIcon: GestureDetector(
+                            onTap: () {
+                              if (!_showpass) {
+                                _showpass = true;
+                              } else {
+                                _showpass = false;
+                              }
+                              setState(() {});
+                            },
+                            child: Icon(
+                              _showpass
+                                  ? Icons.visibility
+                                  : Icons.visibility_off,
+                            ))),
+                    SizedBox(
+                      height: 20,
+                    ),
+                    Container(
+                      width: Get.width * .7,
+                      child: TextFormField(
+                        controller: repasswordController,
+                        validator: (val) =>
+                            MatchValidator(errorText: 'passwords do not match')
+                                .validateMatch(val, password),
+                        style: TextStyle(color: Colors.white),
+                        cursorColor: Colors.white,
+                        cursorHeight: 22,
+                        textInputAction: TextInputAction.done,
+                        onFieldSubmitted: (value) {
+                          if (_formKey.currentState.validate() &&
+                              _buttonState == ButtonState.idle) {
+                            _buttonState = ButtonState.loading;
+                            setState(() {});
+                            _registerProgress(context);
+                          }
+                        },
+                        obscureText: true,
+                        decoration: InputDecoration(
+                            border: border,
+                            enabled: true,
+                            focusedBorder: border,
+                            enabledBorder: border,
                             prefixIcon: Icon(
                               Icons.lock,
-                              color: Colors.white,
                             ),
-                            suffixIcon: GestureDetector(
-                                onTap: () {
-                                  if (!_showpass) {
-                                    _showpass = true;
-                                  } else {
-                                    _showpass = false;
-                                  }
-                                  setState(() {});
-                                },
-                                child: Icon(
-                                    _showpass
-                                        ? Icons.visibility
-                                        : Icons.visibility_off,
-                                    color: Colors.white))),
-                        SizedBox(
-                          height: 20,
-                        ),
-                        Container(
-                          width: Get.width * .7,
-                          child: TextFormField(
-                            controller: repasswordController,
-                            validator: (val) => MatchValidator(
-                                    errorText: 'passwords do not match')
-                                .validateMatch(val, password),
-                            style: TextStyle(color: Colors.white),
-                            cursorColor: Colors.white,
-                            cursorHeight: 22,
-                            textInputAction: TextInputAction.done,
-                            onFieldSubmitted: (value) {
+                            hintText: "Re-enter Password",
+                            filled: true),
+                      ),
+                    ),
+                    SizedBox(
+                      height: 20,
+                    ),
+                    Container(
+                        width: Get.width * .5,
+                        height: 50,
+                        child: ProgressButton.icon(
+                            textStyle: GoogleFonts.ubuntu(
+                                textStyle: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.w500)),
+                            iconedButtons: {
+                              ButtonState.idle: IconedButton(
+                                  text: "Register",
+                                  icon: Icon(Icons.fact_check,
+                                      color: Colors.white),
+                                  color: Color(0xfff06315c)),
+                              ButtonState.loading: IconedButton(
+                                  text: "Registering",
+                                  color: Color(0xfff06315c)),
+                              ButtonState.fail: IconedButton(
+                                  text: "Failed",
+                                  icon: Icon(Icons.cancel, color: Colors.white),
+                                  color: Colors.red.shade300),
+                              ButtonState.success: IconedButton(
+                                  text: "Registered",
+                                  icon: Icon(
+                                    Icons.check_circle,
+                                    color: Colors.white,
+                                  ),
+                                  color: Colors.green.shade400)
+                            },
+                            onPressed: () {
                               if (_formKey.currentState.validate() &&
                                   _buttonState == ButtonState.idle) {
                                 _buttonState = ButtonState.loading;
@@ -218,98 +266,39 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                                 _registerProgress(context);
                               }
                             },
-                            obscureText: true,
-                            decoration: InputDecoration(
-                                border: border,
-                                enabled: true,
-                                focusedBorder: border,
-                                enabledBorder: border,
-                                prefixIcon: Icon(
-                                  Icons.lock,
-                                  color: Colors.white,
-                                ),
-                                fillColor: tfColor,
-                                hintText: "Re-enter Password",
-                                hintStyle: TextStyle(color: Color(0xff8F8F8F)),
-                                filled: true),
-                          ),
+                            state: _buttonState)),
+                    SizedBox(
+                      height: 30,
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          "Already a User ?",
+                          style: TextStyle(fontSize: 18),
                         ),
                         SizedBox(
-                          height: 20,
+                          width: 10,
                         ),
-                        Container(
-                            width: Get.width * .5,
-                            height: 50,
-                            child: ProgressButton.icon(
-                                textStyle: GoogleFonts.ubuntu(
-                                    textStyle: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 20,
-                                        fontWeight: FontWeight.w500)),
-                                iconedButtons: {
-                                  ButtonState.idle: IconedButton(
-                                      text: "Register",
-                                      icon: Icon(Icons.fact_check,
-                                          color: Colors.white),
-                                      color: Color(0xfff06315c)),
-                                  ButtonState.loading: IconedButton(
-                                      text: "Registering",
-                                      color: Color(0xfff06315c)),
-                                  ButtonState.fail: IconedButton(
-                                      text: "Failed",
-                                      icon: Icon(Icons.cancel,
-                                          color: Colors.white),
-                                      color: Colors.red.shade300),
-                                  ButtonState.success: IconedButton(
-                                      text: "Registered",
-                                      icon: Icon(
-                                        Icons.check_circle,
-                                        color: Colors.white,
-                                      ),
-                                      color: Colors.green.shade400)
-                                },
-                                onPressed: () {
-                                  if (_formKey.currentState.validate() &&
-                                      _buttonState == ButtonState.idle) {
-                                    _buttonState = ButtonState.loading;
-                                    setState(() {});
-                                    _registerProgress(context);
-                                  }
-                                },
-                                state: _buttonState)),
-                        SizedBox(
-                          height: 30,
-                        ),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              "Already a User ?",
-                              style:
-                                  TextStyle(color: Colors.white, fontSize: 18),
-                            ),
-                            SizedBox(
-                              width: 10,
-                            ),
-                            InkWell(
-                              onTap: () {
-                                Navigator.of(context).pop();
-                              },
-                              child: Text("Login",
-                                  style: TextStyle(
-                                      color: Color(0xff9C4040), fontSize: 18)),
-                            )
-                          ],
-                        ),
-                        SizedBox(
-                          height: 10,
-                        ),
-                      ]),
-                    ],
-                  ),
-                ),
+                        InkWell(
+                          onTap: () {
+                            Navigator.of(context).pop();
+                          },
+                          child: Text("Login",
+                              style: TextStyle(
+                                  color: Color(0xff9C4040), fontSize: 18)),
+                        )
+                      ],
+                    ),
+                    SizedBox(
+                      height: 10,
+                    ),
+                  ]),
+                ],
               ),
-            )),
+            ),
+          ),
+        )),
       ),
     );
   }

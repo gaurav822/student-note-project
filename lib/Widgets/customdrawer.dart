@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:student_notes/Api/authhelper.dart';
@@ -8,6 +9,7 @@ import 'package:student_notes/Screens/homescreens/profile/profilepage.dart';
 import 'package:student_notes/Screens/loginUI.dart';
 import 'package:student_notes/SecuredStorage/securedstorage.dart';
 import 'package:student_notes/Utils/colors.dart';
+import 'package:student_notes/Widgets/LoadingDialog.dart';
 import 'package:student_notes/Widgets/custom_page_route.dart';
 
 class CustomDrawer extends StatelessWidget {
@@ -15,11 +17,11 @@ class CustomDrawer extends StatelessWidget {
   CustomDrawer(this._imageUrl);
   @override
   Widget build(BuildContext context) {
-    TextStyle style = GoogleFonts.ubuntu(fontSize: 16, color: Colors.white);
+    TextStyle style = GoogleFonts.ubuntu(fontSize: 16);
 
     return Drawer(
       child: Container(
-        color: Colors.black,
+        // color: Colors.black,
         child: SafeArea(
           child: Column(
             children: [
@@ -37,7 +39,9 @@ class CustomDrawer extends StatelessWidget {
                       ClipRRect(
                         borderRadius: BorderRadius.circular(60),
                         child: (Image.network(
-                          _imageUrl,
+                          _imageUrl != null
+                              ? _imageUrl
+                              : "https://api.iscmentor.com/media/profile_img/default.jpg",
                           height: 110,
                           width: 120,
                           fit: BoxFit.fitWidth,
@@ -55,7 +59,6 @@ class CustomDrawer extends StatelessWidget {
                 ),
                 leading: Icon(
                   Icons.home,
-                  color: Colors.white,
                 ),
               ),
               ListTile(
@@ -70,21 +73,15 @@ class CustomDrawer extends StatelessWidget {
                 ),
                 leading: Icon(
                   Icons.person,
-                  color: Colors.white,
                 ),
               ),
               ExpansionTile(
-                // collapsedBackgroundColor: Colors.red,
-                // backgroundColor: Colors.yellow,
-                // initiallyExpanded: true,
-                iconColor: Colors.white,
                 title: Text(
                   "Settings",
                   style: style,
                 ),
                 leading: Icon(
                   Icons.settings,
-                  color: Colors.white,
                 ),
                 children: <Widget>[
                   ListTile(
@@ -97,7 +94,7 @@ class CustomDrawer extends StatelessWidget {
                           child: ChangePassword(),
                           direction: AxisDirection.right));
                     },
-                    leading: Icon(Icons.vpn_key, color: Colors.white),
+                    leading: Icon(Icons.vpn_key),
                   ),
                 ],
               ),
@@ -107,17 +104,8 @@ class CustomDrawer extends StatelessWidget {
                   showDialog(
                       barrierDismissible: false,
                       context: context,
-                      builder: (context) => AlertDialog(
-                            content: Row(
-                              // mainAxisAlignment: MainAxisAlignment.spaceAround,
-                              children: [
-                                Text("Logging out..."),
-                                SizedBox(
-                                  width: 20,
-                                ),
-                                CircularProgressIndicator(),
-                              ],
-                            ),
+                      builder: (context) => LoadingDialog(
+                            loadText: "Logging out...",
                           ));
 
                   String res = await AuthHelper.logout();
@@ -126,10 +114,13 @@ class CustomDrawer extends StatelessWidget {
                     Navigator.of(context).pushAndRemoveUntil(
                         MaterialPageRoute(builder: (context) => LoginScreen()),
                         (route) => false);
+
+                    final gAuthKey = await SecuredStorage.getGAuthKey();
+                    if (gAuthKey != null) {
+                      await GoogleSignInHelper.logout();
+                    }
                     await SecuredStorage.clear();
-                    await GoogleSignInHelper.logout();
-                    print("Data Cleared from Storage");
-                    Fluttertoast.showToast(msg: "Logout Successful");
+                    EasyLoading.showSuccess("Logout Successful");
                   } else {
                     Navigator.of(context).pop();
                     Navigator.of(context).pop();
@@ -138,12 +129,11 @@ class CustomDrawer extends StatelessWidget {
                 },
                 title: Text(
                   "Logout",
-                  style: GoogleFonts.ubuntu(
-                      color: Color(0xff9C4040), fontSize: 16),
+                  style: GoogleFonts.ubuntu(color: Colors.red, fontSize: 16),
                 ),
                 leading: Icon(
                   Icons.logout,
-                  color: Color(0xff9C4040),
+                  color: Colors.red,
                 ),
               ),
               SizedBox(

@@ -40,6 +40,7 @@ class AuthHelper {
       }
       return res.statusCode.toString();
     } on SocketException catch (e) {
+      print(e);
       return "404";
     } catch (e) {
       return e.toString();
@@ -74,6 +75,7 @@ class AuthHelper {
       } else
         return res.data.toString();
     } on SocketException catch (e) {
+      print(e);
       return "404";
     } catch (e) {
       print(e.toString());
@@ -152,6 +154,7 @@ class AuthHelper {
         return "404";
       }
     } on SocketException catch (e) {
+      print(e);
       return "400";
     } catch (e) {
       return "400";
@@ -223,6 +226,32 @@ class AuthHelper {
     } catch (e) {
       print(e.toString());
       return "404";
+    }
+  }
+
+  static Future<String> resetPasswordViaEmail(
+      String password, String uidb64, String token) async {
+    Map<String, String> requestHeaders = {
+      'Content-type': 'application/json',
+      'Accept': 'application/json',
+    };
+    try {
+      var res =
+          await http.patch(Uri.parse('$url/auth/password-reset-complete/'),
+              body: jsonEncode(<String, String>{
+                'password': password,
+                'uidb64': uidb64,
+                'token': token,
+              }),
+              headers: requestHeaders);
+      print("The response for pass reset " + res.body);
+      if (res.statusCode == 200) {
+        return "200";
+      } else {
+        return res.body.toString();
+      }
+    } catch (e) {
+      return e.toString();
     }
   }
 }

@@ -2,10 +2,12 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:student_notes/Api/userhelper.dart';
 import 'package:student_notes/Models/user_model.dart';
 import 'package:student_notes/Utils/colors.dart';
+import 'package:student_notes/Widgets/LoadingDialog.dart';
 import 'package:student_notes/Widgets/datepickerWidget.dart';
 import 'package:student_notes/Widgets/profile_widget.dart';
 import 'package:student_notes/Widgets/textfieldwidget.dart';
@@ -66,7 +68,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
   Widget build(BuildContext context) {
     return SafeArea(
       child: Scaffold(
-        backgroundColor: backColor,
         body: Form(
           key: _formKey,
           child: Stack(children: [
@@ -88,19 +89,10 @@ class _EditProfilePageState extends State<EditProfilePage> {
                             context: context,
                             builder: (context) {
                               return WillPopScope(
-                                onWillPop: () async => false,
-                                child: AlertDialog(
-                                  content: Row(
-                                    children: [
-                                      Text("Uploading..."),
-                                      SizedBox(
-                                        width: 30,
-                                      ),
-                                      CircularProgressIndicator(),
-                                    ],
-                                  ),
-                                ),
-                              );
+                                  onWillPop: () async => false,
+                                  child: LoadingDialog(
+                                    loadText: "Uploading...",
+                                  ));
                             });
                         String res =
                             await UserHelper.updateProfilePicture(image);
@@ -181,8 +173,15 @@ class _EditProfilePageState extends State<EditProfilePage> {
                 TextFieldWidget(
                   textEditingController: studyLevelController,
                   label: "Study Level",
-                  text: "",
+                  text: widget.userModel.level != null
+                      ? widget.userModel.level
+                      : "",
                   onChanged: (stulevel) {},
+                  valfunction: (value) {
+                    if (value.isEmpty) {
+                      return "This field is Requred";
+                    }
+                  },
                 ),
                 SizedBox(
                   height: 24,
@@ -190,8 +189,15 @@ class _EditProfilePageState extends State<EditProfilePage> {
                 TextFieldWidget(
                   textEditingController: courseNameController,
                   label: "Course Name",
-                  text: "",
+                  text: widget.userModel.courseName != null
+                      ? widget.userModel.courseName
+                      : "",
                   onChanged: (cname) {},
+                  valfunction: (value) {
+                    if (value.isEmpty) {
+                      return "This field is Requred";
+                    }
+                  },
                 ),
                 SizedBox(
                   height: 24,
@@ -212,13 +218,23 @@ class _EditProfilePageState extends State<EditProfilePage> {
                 SizedBox(
                   height: 24,
                 ),
-                Padding(
-                  padding: const EdgeInsets.only(left: 30, right: 30),
+                Container(
+                  height: 60,
+                  padding: EdgeInsets.symmetric(horizontal: 50),
                   child: ElevatedButton(
-                    child: Text(
-                      "Save",
-                      style: TextStyle(fontSize: 20),
-                    ),
+                    style: ButtonStyle(
+                        backgroundColor:
+                            MaterialStateProperty.all(primaryColor),
+                        shape:
+                            MaterialStateProperty.all<RoundedRectangleBorder>(
+                                RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(20.0),
+                                    side: BorderSide(color: Colors.grey)))),
+                    child: Text("Update",
+                        style: GoogleFonts.ubuntu(
+                          textStyle:
+                              TextStyle(fontSize: 20, color: Colors.white),
+                        )),
                     onPressed: () {
                       validateUserInfo();
                     },
@@ -230,7 +246,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
               child: new IconButton(
                 icon: Icon(
                   Icons.arrow_back,
-                  color: Colors.white,
                 ),
                 onPressed: () {
                   Navigator.of(context).pop();
@@ -263,16 +278,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
     showDialog(
         context: context,
         builder: (context) {
-          return AlertDialog(
-            content: Row(
-              children: [
-                Text("Updating Info..."),
-                SizedBox(
-                  width: 30,
-                ),
-                CircularProgressIndicator(),
-              ],
-            ),
+          return LoadingDialog(
+            loadText: "Updating Info...",
           );
         });
 

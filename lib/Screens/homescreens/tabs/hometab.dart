@@ -84,7 +84,7 @@ class _HomeTabState extends State<HomeTab> {
                 SizedBox(
                   width: 20,
                 ),
-                Text("Ads", style: TextStyle(color: Colors.white, fontSize: 18))
+                Text("Ads", style: TextStyle(fontSize: 18))
               ],
             ),
             SizedBox(
@@ -143,8 +143,7 @@ class _HomeTabState extends State<HomeTab> {
                 SizedBox(
                   width: 20,
                 ),
-                Text("New Courses >>",
-                    style: TextStyle(color: Colors.white, fontSize: 18))
+                Text("New Courses >>", style: TextStyle(fontSize: 18))
               ],
             ),
             SizedBox(
@@ -205,8 +204,7 @@ class _HomeTabState extends State<HomeTab> {
                 SizedBox(
                   width: 20,
                 ),
-                Text("Popular Courses >>",
-                    style: TextStyle(color: Colors.white, fontSize: 18))
+                Text("Popular Courses >>", style: TextStyle(fontSize: 18))
               ],
             ),
 

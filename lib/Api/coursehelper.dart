@@ -4,7 +4,9 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:student_notes/Models/course_content_model.dart';
 import 'package:student_notes/Models/course_model.dart';
+import 'package:student_notes/Models/eachchapterqmodel.dart';
 import 'package:student_notes/Models/enrolled_course_model.dart';
+import 'package:student_notes/Models/questiondetailmodel.dart';
 import 'package:student_notes/Models/search_course_model.dart';
 import 'package:student_notes/SecuredStorage/securedstorage.dart';
 
@@ -183,6 +185,35 @@ class CourseHelper {
         print(res.body);
         return Course.fromJson(res.body);
       } else {
+        print("printing the null value from here");
+        return null;
+      }
+    } catch (e) {
+      print("Catch from here");
+      print(e.toString());
+      return null;
+    }
+  }
+
+  static Future<QuestionDetailModel> fetchQuestion(
+      int courseId, int chapterId, int questionId) async {
+    String access = await SecuredStorage.getAccess();
+
+    Map<String, String> requestHeaders = {
+      'Content-type': 'application/json',
+      'Accept': 'application/json',
+      'Authorization': 'Bearer ' + access,
+    };
+
+    try {
+      var res = await http.get(
+          Uri.parse('$url/course/$courseId/$chapterId/$questionId'),
+          headers: requestHeaders);
+
+      if (res.statusCode == 200) {
+        print(res.body);
+        return QuestionDetailModel.fromJson(res.body);
+      } else {
         print("From here...");
         return null;
       }
@@ -190,6 +221,34 @@ class CourseHelper {
       print("Catch from here");
       print(e.toString());
       return null;
+    }
+  }
+
+  static Future<EachChapterQModel> fetchCoursebyChapter(
+      int courseId, int chapterId) async {
+    String access = await SecuredStorage.getAccess();
+
+    Map<String, String> requestHeaders = {
+      'Content-type': 'application/json',
+      'Accept': 'application/json',
+      'Authorization': 'Bearer ' + access,
+    };
+
+    try {
+      var res = await http.get(Uri.parse('$url/course/$courseId/$chapterId'),
+          headers: requestHeaders);
+
+      if (res.statusCode == 200) {
+        print(res.body);
+        return EachChapterQModel.fromJson(res.body);
+      } else {
+        print("From here...");
+        return EachChapterQModel(count: 0, next: 0, previous: 0, results: []);
+      }
+    } catch (e) {
+      print("Catch from here");
+      print(e.toString());
+      return EachChapterQModel(count: 0, next: 0, previous: 0, results: []);
     }
   }
 }

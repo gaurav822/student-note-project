@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:student_notes/Api/coursehelper.dart';
 import 'package:student_notes/Models/enrolled_course_model.dart';
 import 'package:student_notes/Screens/coursecontent/course_content.dart';
+import 'package:student_notes/Widgets/LoadingDialog.dart';
 import 'package:student_notes/Widgets/custom_page_route.dart';
 
 class EnrolledCourseCard extends StatelessWidget {
@@ -19,12 +20,13 @@ class EnrolledCourseCard extends StatelessWidget {
         child: Container(
           height: 220,
           decoration: BoxDecoration(
-              image: DecorationImage(
-                  fit: BoxFit.cover,
-                  image: NetworkImage(enrolledCourse.image !=
-                          "https://api.iscmentor.com/media/course_img/default.jpg"
-                      ? enrolledCourse.image
-                      : "https://www.publicdomainpictures.net/pictures/30000/velka/plain-white-background.jpg")),
+              color: Theme.of(context).primaryColor,
+              // image: DecorationImage(
+              //     fit: BoxFit.cover,
+              //     image: NetworkImage(enrolledCourse.image !=
+              //             "https://api.iscmentor.com/media/course_img/default.jpg"
+              //         ? enrolledCourse.image
+              //         : "https://www.publicdomainpictures.net/pictures/30000/velka/plain-white-background.jpg")),
               borderRadius: BorderRadius.circular(20),
               boxShadow: [BoxShadow(spreadRadius: .5, color: Colors.white)]),
           child: Padding(
@@ -66,7 +68,9 @@ class EnrolledCourseCard extends StatelessWidget {
                           "Click to view contents",
                           style: GoogleFonts.ubuntu(
                               textStyle: TextStyle(
-                                  fontWeight: FontWeight.w500, fontSize: 20)),
+                                  color: Colors.black,
+                                  fontWeight: FontWeight.w500,
+                                  fontSize: 20)),
                         )
                       : SizedBox(),
                   Spacer(),
@@ -82,6 +86,7 @@ class EnrolledCourseCard extends StatelessWidget {
                                     style: GoogleFonts.ubuntu(
                                         textStyle: TextStyle(
                                             fontSize: 20,
+                                            color: Colors.black,
                                             fontWeight: FontWeight.w400)),
                                   ),
                                   Text(
@@ -126,17 +131,10 @@ class EnrolledCourseCard extends StatelessWidget {
         barrierDismissible: false,
         builder: (context) {
           return WillPopScope(
-            onWillPop: () async => false,
-            child: AlertDialog(
-              content: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  Text("Deleting course..."),
-                  CircularProgressIndicator(),
-                ],
-              ),
-            ),
-          );
+              onWillPop: () async => false,
+              child: LoadingDialog(
+                loadText: "Deleting Course",
+              ));
         });
     String res = await CourseHelper.unenrollCourse(slug);
     if (res == "200") {

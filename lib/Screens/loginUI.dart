@@ -12,8 +12,9 @@ import 'package:progress_state_button/progress_button.dart';
 import 'package:student_notes/Api/authhelper.dart';
 import 'package:student_notes/Api/googlesigninhelper.dart';
 import 'package:student_notes/Screens/registerUI.dart';
-import 'package:student_notes/Utils/colors.dart';
+import 'package:student_notes/SecuredStorage/securedstorage.dart';
 import 'package:get/get.dart';
+import 'package:student_notes/Widgets/LoadingDialog.dart';
 import 'package:student_notes/Widgets/custom_page_route.dart';
 import 'package:student_notes/Screens/homescreens/homepage.dart';
 import 'package:student_notes/Widgets/custom_textfield.dart';
@@ -59,7 +60,6 @@ class _LoginScreenState extends State<LoginScreen> {
       child: SafeArea(
         child: Scaffold(
           resizeToAvoidBottomInset: false,
-          backgroundColor: backColor,
           body: SingleChildScrollView(
             child: Container(
               child: Column(
@@ -74,8 +74,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       Text("Let's Sign you in.",
                           style: GoogleFonts.ubuntu(
-                            textStyle:
-                                TextStyle(color: Colors.white, fontSize: 28),
+                            textStyle: TextStyle(fontSize: 28),
                           ))
                     ],
                   ),
@@ -98,12 +97,14 @@ class _LoginScreenState extends State<LoginScreen> {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: [
-                          Icon(FontAwesomeIcons.google),
+                          Icon(FontAwesomeIcons.google, color: Colors.white),
                           Text(
                             "Sign in with Google",
                             style: GoogleFonts.ubuntu(
                                 textStyle: TextStyle(
-                                    fontSize: 14, fontWeight: FontWeight.bold)),
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white)),
                           )
                         ],
                       ),
@@ -138,22 +139,10 @@ class _LoginScreenState extends State<LoginScreen> {
             barrierDismissible: false,
             context: context,
             builder: (context) => WillPopScope(
-                  onWillPop: () async => false,
-                  child: AlertDialog(
-                    content: Row(
-                      // mainAxisAlignment: MainAxisAlignment.spaceAround,
-                      children: [
-                        Text("Please wait..."),
-                        SizedBox(
-                          width: 20,
-                        ),
-                        CircularProgressIndicator(),
-                      ],
-                    ),
-                  ),
-                ));
+                onWillPop: () async => false, child: LoadingDialog()));
         final GoogleSignInAuthentication googleAuth = await user.authentication;
         log("The new id token" + googleAuth.idToken);
+        await SecuredStorage.setGAuthKey(googleAuth.idToken);
         String res =
             await AuthHelper.googleSignIn(authToken: googleAuth.idToken);
         print("This is res " + res);
@@ -161,7 +150,8 @@ class _LoginScreenState extends State<LoginScreen> {
           Navigator.of(context).pop();
 
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text("Login Successful"),
+            content:
+                Text("Login Successful", style: TextStyle(color: Colors.white)),
             backgroundColor: Colors.green,
           ));
 
@@ -169,14 +159,21 @@ class _LoginScreenState extends State<LoginScreen> {
               child: MyHomePage(), direction: AxisDirection.right));
         } else {
           Navigator.of(context).pop();
-
           await GoogleSignInHelper.logout();
-          ScaffoldMessenger.of(context)
-              .showSnackBar(SnackBar(content: Text("Login Failed")));
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(
+              "User already exists: Please signin with email and password",
+              style: TextStyle(color: Colors.white),
+            ),
+            backgroundColor: Colors.red,
+          ));
         }
       } else {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text("Login Failed"),
+          content: Text(
+            "Login Failed",
+            style: TextStyle(color: Colors.white),
+          ),
           backgroundColor: Colors.red,
         ));
       }
@@ -197,7 +194,7 @@ class _LoginScreenState extends State<LoginScreen> {
           children: [
             Text(
               "Don't have account ?",
-              style: TextStyle(color: Colors.white, fontSize: 18),
+              style: TextStyle(fontSize: 18),
             ),
             SizedBox(
               width: 10,
@@ -243,7 +240,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       }
                     },
                     label: "Username",
-                    prefixIcon: Icon(Icons.person, color: Colors.white),
+                    prefixIcon: Icon(Icons.person),
                   ),
                 ),
                 SizedBox(
@@ -255,8 +252,6 @@ class _LoginScreenState extends State<LoginScreen> {
                     controller: passController,
                     validator: passwordValidator,
                     obscureText: !visibility,
-                    style: TextStyle(color: Colors.white),
-                    cursorColor: Colors.white,
                     cursorHeight: 22,
                     textInputAction: TextInputAction.done,
                     onFieldSubmitted: (value) {
@@ -264,12 +259,10 @@ class _LoginScreenState extends State<LoginScreen> {
                     },
                     decoration: InputDecoration(
                         border: border,
-                        enabled: true,
                         focusedBorder: border,
                         enabledBorder: border,
                         prefixIcon: Icon(
                           Icons.lock,
-                          color: Colors.white,
                         ),
                         suffixIcon: InkWell(
                           onTap: _changeVisibility,
@@ -277,12 +270,9 @@ class _LoginScreenState extends State<LoginScreen> {
                             !visibility
                                 ? Icons.visibility_off
                                 : Icons.visibility,
-                            color: Colors.white,
                           ),
                         ),
-                        fillColor: tfColor,
                         hintText: "Password",
-                        hintStyle: TextStyle(color: Color(0xff8F8F8F)),
                         filled: true),
                   ),
                 ),
@@ -296,8 +286,9 @@ class _LoginScreenState extends State<LoginScreen> {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.end,
                         children: [
-                          Text("Forgot ",
-                              style: TextStyle(color: Colors.white)),
+                          Text(
+                            "Forgot ",
+                          ),
                           InkWell(
                             onTap: () {
                               showDialog(
@@ -315,7 +306,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                   color: Color(0xff9C4040), fontSize: 16),
                             ),
                           ),
-                          Text("or ", style: TextStyle(color: Colors.white)),
+                          Text(
+                            "or ",
+                          ),
                           InkWell(
                             onTap: () {
                               showDialog(
@@ -333,7 +326,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   color: Color(0xff9C4040), fontSize: 16),
                             ),
                           ),
-                          Text("?", style: TextStyle(color: Colors.white)),
+                          Text("?"),
                         ],
                       )),
                 ),

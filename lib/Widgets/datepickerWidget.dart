@@ -46,9 +46,9 @@ class _DatePickerWidgetState extends State<DatePickerWidget> {
           Text(widget.label,
               style: GoogleFonts.ubuntu(
                   textStyle: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 20,
-                      color: Colors.white))),
+                fontWeight: FontWeight.bold,
+                fontSize: 20,
+              ))),
           SizedBox(
             height: 8,
           ),
@@ -57,11 +57,10 @@ class _DatePickerWidgetState extends State<DatePickerWidget> {
               validator: widget.valfunction,
               onTap: _selectDate,
               maxLines: 1,
-              style: TextStyle(color: Colors.white),
               controller: widget.controller,
               decoration: InputDecoration(
                   enabledBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: Colors.white),
+                      borderSide: BorderSide(),
                       borderRadius: BorderRadius.circular(12)),
                   border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12)))),

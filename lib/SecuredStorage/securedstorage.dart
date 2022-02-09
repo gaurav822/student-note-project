@@ -7,6 +7,7 @@ class SecuredStorage {
   static const _keyEmail = 'email';
   static const _keyAccess = 'access';
   static const _keyRefresh = 'refresh';
+  static const _gAuthKey = 'gauthkey';
 
   static Future setUsername(String username) async {
     await _storage.write(key: _keyUsername, value: username);
@@ -37,5 +38,13 @@ class SecuredStorage {
 
   static Future clear() async {
     await _storage.delete(key: 'email');
+    await _storage.delete(key: 'gauthkey');
   }
+
+  static Future setGAuthKey(String authKey) async {
+    await _storage.write(key: _gAuthKey, value: authKey);
+  }
+
+  static Future<String> getGAuthKey() async =>
+      await _storage.read(key: _gAuthKey);
 }

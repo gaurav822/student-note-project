@@ -2,12 +2,12 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:provider/provider.dart';
+import 'package:student_notes/Api/coursehelper.dart';
 import 'package:student_notes/Api/userhelper.dart';
+import 'package:student_notes/Models/enrolled_course_model.dart';
 import 'package:student_notes/Models/user_model.dart';
 import 'package:student_notes/Screens/homescreens/profile/edit_profilepage.dart';
 import 'package:student_notes/Utils/colors.dart';
-import 'package:student_notes/Widgets/button_widget.dart';
 import 'package:student_notes/Widgets/custom_page_route.dart';
 import 'package:student_notes/Widgets/numbers_widget.dart';
 import 'package:student_notes/Widgets/profile_widget.dart';
@@ -20,7 +20,12 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
+  TextStyle smallTxStyle = GoogleFonts.ubuntu(
+      textStyle: TextStyle(
+    fontSize: 16,
+  ));
   var _isLoading = true;
+  int totalPremim = 0, totalFree = 0;
   UserModel user;
   Timer _timer;
 
@@ -29,7 +34,23 @@ class _ProfilePageState extends State<ProfilePage> {
     _timer = Timer.periodic(Duration(seconds: 2), (timer) {
       findUserModel();
     });
+    getTotalCourseCount();
     super.initState();
+  }
+
+  Future<void> getTotalCourseCount() async {
+    int count1 = 0, count2 = 0;
+    EnrolledCourseModel enrolledCourseModel = await CourseHelper.getMyCourses();
+
+    List<EnrolledCourse> enrolledCourses = enrolledCourseModel.results;
+    if (enrolledCourses != null) {
+      for (int i = 0; i < enrolledCourses.length; i++) {
+        enrolledCourses[i].isPremium ? count1++ : count2++;
+      }
+      totalPremim = count1;
+      totalFree = count2;
+      setState(() {});
+    }
   }
 
   Future<void> findUserModel() async {
@@ -52,7 +73,6 @@ class _ProfilePageState extends State<ProfilePage> {
   Widget build(BuildContext context) {
     return SafeArea(
       child: Scaffold(
-        backgroundColor: backColor,
         body: Stack(children: [
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
@@ -90,7 +110,7 @@ class _ProfilePageState extends State<ProfilePage> {
                             SizedBox(
                               height: 24,
                             ),
-                            NumbersWidget(),
+                            NumbersWidget(totalPremim, totalFree),
                             SizedBox(
                               height: 30,
                             ),
@@ -107,7 +127,6 @@ class _ProfilePageState extends State<ProfilePage> {
                   child: new IconButton(
                     icon: Icon(
                       Icons.arrow_back,
-                      color: Colors.white,
                     ),
                     onPressed: () {
                       Navigator.of(context).pop();
@@ -124,26 +143,40 @@ class _ProfilePageState extends State<ProfilePage> {
   Widget buildName(UserModel user) => Column(
         children: [
           Text(user.name,
-              style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 24,
-                  color: Colors.white)),
+              style: GoogleFonts.ubuntu(
+                  textStyle: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 24,
+              ))),
           SizedBox(
             height: 5,
           ),
           Text(
             user.email,
-            style: TextStyle(color: Colors.grey.shade200),
+            style: GoogleFonts.ubuntu(textStyle: TextStyle()),
           )
         ],
       );
 
-  Widget buildPurchaseButton() => ButtonWidget(
-        text: "Purchase Course",
-        onClicked: () {
-          Navigator.of(context).pop();
-          Navigator.of(context).pop();
-        },
+  Widget buildPurchaseButton() => Container(
+        height: 60,
+        width: 200,
+        child: ElevatedButton(
+          style: ButtonStyle(
+              backgroundColor: MaterialStateProperty.all(primaryColor),
+              shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                  RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(25.0),
+                      side: BorderSide(color: Colors.white)))),
+          child: Text(
+            "Purchase Course",
+            style: TextStyle(color: Colors.white, fontSize: 18),
+          ),
+          onPressed: () {
+            Navigator.of(context).pop();
+            Navigator.of(context).pop();
+          },
+        ),
       );
 
   Widget buildEducation(UserModel user) => Container(
@@ -153,92 +186,84 @@ class _ProfilePageState extends State<ProfilePage> {
           children: [
             Text("Education",
                 style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white)),
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                )),
             SizedBox(
               height: 16,
             ),
             Text("Institue",
                 style: GoogleFonts.ubuntu(
                     textStyle: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.white))),
+                  fontSize: 20,
+                  fontWeight: FontWeight.w500,
+                ))),
             Text(user.institute != null ? user.institute : "N/A",
-                style: GoogleFonts.ubuntu(
-                    textStyle: TextStyle(fontSize: 16, color: Colors.white))),
+                style: smallTxStyle),
             SizedBox(
               height: 20,
             ),
             Text("Study Level",
                 style: GoogleFonts.ubuntu(
                     textStyle: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.white))),
-            Text(user.level != null ? user.level : "N/A",
-                style: GoogleFonts.ubuntu(
-                    textStyle: TextStyle(fontSize: 16, color: Colors.white))),
+                  fontSize: 20,
+                  fontWeight: FontWeight.w500,
+                ))),
+            Text(user.level != null ? user.level : "N/A", style: smallTxStyle),
             SizedBox(
               height: 20,
             ),
             Text("Course Name",
                 style: GoogleFonts.ubuntu(
                     textStyle: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.white))),
+                  fontSize: 20,
+                  fontWeight: FontWeight.w500,
+                ))),
             Text(user.courseName != null ? user.courseName : "N/A",
-                style: GoogleFonts.ubuntu(
-                    textStyle: TextStyle(fontSize: 16, color: Colors.white))),
+                style: smallTxStyle),
             SizedBox(
               height: 30,
             ),
             Text("Personal Info",
                 style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white)),
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                )),
             SizedBox(
               height: 16,
             ),
             Text("Date of Birth",
                 style: GoogleFonts.ubuntu(
                     textStyle: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.white))),
-            Text(user.dob != null ? user.dob : "N/A",
-                style: GoogleFonts.ubuntu(
-                    textStyle: TextStyle(fontSize: 16, color: Colors.white))),
+                  fontSize: 20,
+                  fontWeight: FontWeight.w500,
+                ))),
+            Text(user.dob != null ? user.dob : "N/A", style: smallTxStyle),
             SizedBox(
               height: 20,
             ),
             Text("Home Address",
                 style: GoogleFonts.ubuntu(
                     textStyle: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.white))),
+                  fontSize: 20,
+                  fontWeight: FontWeight.w500,
+                ))),
             Text(user.address != null ? user.address : "N/A",
-                style: GoogleFonts.ubuntu(
-                    textStyle: TextStyle(fontSize: 16, color: Colors.white))),
+                style: smallTxStyle),
             SizedBox(
               height: 20,
             ),
             Text("Phone Number",
                 style: GoogleFonts.ubuntu(
                     textStyle: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.white))),
+                  fontSize: 20,
+                  fontWeight: FontWeight.w500,
+                ))),
             Text(
                 (user.phoneNumber != null && user.phoneNumber.isNotEmpty)
                     ? user.phoneNumber
                     : "N/A",
-                style: GoogleFonts.ubuntu(
-                    textStyle: TextStyle(fontSize: 16, color: Colors.white))),
+                style: smallTxStyle),
           ],
         ),
       );

@@ -1,12 +1,14 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:student_notes/Screens/provider/theme_provider.dart';
 import 'package:student_notes/SecuredStorage/securedstorage.dart';
 
 import 'package:student_notes/Utils/colors.dart';
 import 'package:student_notes/Utils/internetutils.dart';
 
-Widget customAppBar(BuildContext context, String username, int _currentIndex) {
+Widget customAppBar(BuildContext context, String username, int _currentIndex,
+    ThemeModel themeNotifier) {
   return AppBar(
     backgroundColor: primaryColor,
     actions: [
@@ -18,7 +20,15 @@ Widget customAppBar(BuildContext context, String username, int _currentIndex) {
             final access = await SecuredStorage.getAccess();
             print("The access token is" + access);
           },
-          icon: Icon(Icons.refresh))
+          icon: Icon(Icons.refresh)),
+      IconButton(
+          icon: Icon(
+              themeNotifier.isDark ? Icons.wb_sunny : Icons.nightlight_round),
+          onPressed: () {
+            themeNotifier.isDark
+                ? themeNotifier.isDark = false
+                : themeNotifier.isDark = true;
+          })
     ],
     title: Row(children: [
       Text(

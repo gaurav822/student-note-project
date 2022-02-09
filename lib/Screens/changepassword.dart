@@ -4,6 +4,7 @@ import 'package:form_field_validator/form_field_validator.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:student_notes/Api/authhelper.dart';
 import 'package:student_notes/Utils/colors.dart';
+import 'package:student_notes/Widgets/LoadingDialog.dart';
 
 class ChangePassword extends StatefulWidget {
   const ChangePassword({Key key}) : super(key: key);
@@ -45,8 +46,10 @@ class _ChangePasswordState extends State<ChangePassword> {
         borderRadius: BorderRadius.circular(10));
     return SafeArea(
       child: Scaffold(
+          appBar: AppBar(
+            backgroundColor: primaryColor,
+          ),
           resizeToAvoidBottomInset: false,
-          backgroundColor: backColor,
           body: Form(
             key: _formKey,
             child: Padding(
@@ -62,9 +65,9 @@ class _ChangePasswordState extends State<ChangePassword> {
                         "Change Password",
                         style: GoogleFonts.ubuntu(
                             textStyle: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 20,
-                                color: Colors.white)),
+                          fontWeight: FontWeight.bold,
+                          fontSize: 20,
+                        )),
                       ),
                     ),
                     SizedBox(
@@ -78,18 +81,15 @@ class _ChangePasswordState extends State<ChangePassword> {
                       decoration: InputDecoration(
                           prefixIcon: Icon(
                             Icons.lock,
-                            color: tfColor,
                           ),
                           suffixIcon: InkWell(
                               onTap: _firstvisibilityChange,
                               child: Icon(
                                 _initialIcon1,
-                                color: Colors.black,
                               )),
                           border: border,
                           focusedBorder: border,
                           filled: true,
-                          fillColor: Colors.white,
                           focusColor: Colors.white,
                           hintText: "Enter old password"),
                     ),
@@ -105,18 +105,15 @@ class _ChangePasswordState extends State<ChangePassword> {
                       decoration: InputDecoration(
                           prefixIcon: Icon(
                             Icons.lock,
-                            color: tfColor,
                           ),
                           suffixIcon: InkWell(
                               onTap: _secondvisibilityChange,
                               child: Icon(
                                 _initialIcon2,
-                                color: Colors.black,
                               )),
                           border: border,
                           focusedBorder: border,
                           filled: true,
-                          fillColor: Colors.white,
                           focusColor: Colors.white,
                           hintText: "Enter new password"),
                     ),
@@ -133,19 +130,16 @@ class _ChangePasswordState extends State<ChangePassword> {
                       decoration: InputDecoration(
                           prefixIcon: Icon(
                             Icons.lock,
-                            color: tfColor,
                           ),
                           suffixIcon: InkWell(
                             child: Icon(
                               _initialIcon3,
-                              color: Colors.black,
                             ),
                             onTap: _thirdvisibilityChange,
                           ),
                           border: border,
                           focusedBorder: border,
                           filled: true,
-                          fillColor: Colors.white,
                           focusColor: Colors.white,
                           hintText: "Re-enter new password"),
                     ),
@@ -168,9 +162,9 @@ class _ChangePasswordState extends State<ChangePassword> {
                           "Submit",
                           style: GoogleFonts.ubuntu(
                               textStyle: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w600,
-                          )),
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white)),
                         ),
                       ),
                     ),
@@ -196,29 +190,20 @@ class _ChangePasswordState extends State<ChangePassword> {
     showDialog(
         barrierDismissible: false,
         context: context,
-        builder: (context) => AlertDialog(
-              content: Row(
-                // mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  Text("Changing Password"),
-                  SizedBox(
-                    width: 20,
-                  ),
-                  CircularProgressIndicator(),
-                ],
-              ),
-            ));
+        builder: (context) => LoadingDialog());
 
     var response = await AuthHelper.changePassword(oldpass, pass1, pass2);
     print(response);
     if (response == "200") {
       Navigator.of(context).pop();
-      Fluttertoast.showToast(msg: "Password Changed Successfully!");
+      Fluttertoast.showToast(
+          msg: "Password Changed Successfully!", backgroundColor: Colors.green);
       Navigator.of(context).pop();
     } else if (response.contains("old_password")) {
       Navigator.of(context).pop();
 
-      Fluttertoast.showToast(msg: "Old Password is Not Correct !");
+      Fluttertoast.showToast(
+          msg: "Old Password is Not Correct !", backgroundColor: Colors.red);
     } else {
       Navigator.of(context).pop();
       Fluttertoast.showToast(msg: response.toString());

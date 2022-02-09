@@ -7,8 +7,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:student_notes/Api/coursehelper.dart';
 import 'package:student_notes/Models/course_model.dart';
 import 'package:student_notes/Models/search_course_model.dart';
+import 'package:student_notes/Screens/searchresult/searchresultpage.dart';
 import 'package:student_notes/Widgets/courseCard.dart';
-import 'package:student_notes/Utils/colors.dart';
 
 class BrowseCourse extends StatefulWidget {
   const BrowseCourse({Key key}) : super(key: key);
@@ -20,8 +20,6 @@ class BrowseCourse extends StatefulWidget {
 class _BrowseCourseState extends State<BrowseCourse> {
   TextEditingController textController = TextEditingController();
   StreamController<CourseList> _allCourseStream = StreamController();
-
-  List<Course> _searchedCourses;
 
   StreamController<SearchCourseModel> searchCourseStream =
       StreamController<SearchCourseModel>.broadcast();
@@ -55,17 +53,17 @@ class _BrowseCourseState extends State<BrowseCourse> {
         await CourseHelper.searchCourse(searchQuery: textController.text);
 
     //converting search model to CourseDetail Model
-    List<Course> lists = [];
-    lists.length = searchCourseModel.results.length;
-    for (int i = 0; i < lists.length; i++) {
-      if (searchCourseModel.results[i].courseName != null) {
-        Course eachCourse = await CourseHelper.getCourseDetail(
-            searchCourseModel.results[i].courseSlug);
-        lists[i] = eachCourse;
-      }
-    }
-    _searchedCourses = lists;
-    setState(() {});
+    // List<Course> lists = [];
+    // lists.length = searchCourseModel.results.length;
+    // for (int i = 0; i < lists.length; i++) {
+    //   if (searchCourseModel.results[i].courseName != null) {
+    //     Course eachCourse = await CourseHelper.getCourseDetail(
+    //         searchCourseModel.results[i].courseSlug);
+    //     lists[i] = eachCourse;
+    //   }
+    // }
+    // _searchedCourses = lists;
+    // setState(() {});
     if (!searchCourseStream.isClosed) {
       searchCourseStream.sink.add(searchCourseModel);
     }
@@ -78,7 +76,6 @@ class _BrowseCourseState extends State<BrowseCourse> {
         borderSide: BorderSide(color: Colors.grey.shade800));
     return SafeArea(
       child: Scaffold(
-        backgroundColor: backColor,
         body: Container(
           height: Get.height,
           child: Column(children: [
@@ -119,7 +116,10 @@ class _BrowseCourseState extends State<BrowseCourse> {
                     focusedBorder: border,
                     enabledBorder: border,
                     suffixIcon: InkWell(
-                        child: Icon(Icons.close),
+                        child: Icon(
+                          Icons.close,
+                          color: Colors.black,
+                        ),
                         onTap: () {
                           textController.clear();
                           searchCourseStream.add(null);
@@ -128,7 +128,10 @@ class _BrowseCourseState extends State<BrowseCourse> {
                           setState(() {});
                         }),
                     prefixIcon: InkWell(
-                      child: Icon(Icons.search),
+                      child: Icon(
+                        Icons.search,
+                        color: Colors.black,
+                      ),
                     ),
                     hintText: "Search...",
                     fillColor: Colors.white,
@@ -194,7 +197,8 @@ class _BrowseCourseState extends State<BrowseCourse> {
                             case ConnectionState.waiting:
                               return Container(
                                 height: Get.height,
-                                color: backColor,
+                                color:
+                                    Theme.of(context).scaffoldBackgroundColor,
                                 child: Center(
                                   child: CircularProgressIndicator(),
                                 ),
@@ -208,7 +212,8 @@ class _BrowseCourseState extends State<BrowseCourse> {
                               if (snapdata.data.results.isBlank) {
                                 return Container(
                                   height: Get.height,
-                                  color: backColor,
+                                  color:
+                                      Theme.of(context).scaffoldBackgroundColor,
                                   child: Center(
                                       child: Text("No data Found",
                                           style: GoogleFonts.ubuntu(
@@ -219,7 +224,8 @@ class _BrowseCourseState extends State<BrowseCourse> {
                                 );
                               } else {
                                 return Container(
-                                  color: backColor,
+                                  color:
+                                      Theme.of(context).scaffoldBackgroundColor,
                                   child: Center(
                                     child: ListView.builder(
                                         scrollDirection: Axis.vertical,
@@ -233,8 +239,8 @@ class _BrowseCourseState extends State<BrowseCourse> {
                                           return Padding(
                                             padding: const EdgeInsets.symmetric(
                                                 horizontal: 20, vertical: 5),
-                                            child: CourseCard(
-                                                _searchedCourses[index]),
+                                            child: SearchResultPage(
+                                                snapdata.data.results[index]),
                                           );
                                         }),
                                   ),

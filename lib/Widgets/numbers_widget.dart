@@ -1,25 +1,23 @@
 import 'package:flutter/material.dart';
 
 class NumbersWidget extends StatelessWidget {
+  final int premium, free;
+  NumbersWidget(this.premium, this.free);
   @override
   Widget build(BuildContext context) => IntrinsicHeight(
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            buildButton(context, '0', 'Premium Courses'),
+            buildButton(context, premium.toString(), 'Premium Courses'),
             buildDivider(),
             buildButton(context, '2021', 'Active Since'),
             buildDivider(),
-            buildButton(context, '0', 'Free Courses'),
+            buildButton(context, free.toString(), 'Free Courses'),
           ],
         ),
       );
 
-  Widget buildDivider() => Container(
-      height: 24,
-      child: VerticalDivider(
-        color: Colors.grey.shade100,
-      ));
+  Widget buildDivider() => Container(height: 24, child: VerticalDivider());
 
   Widget buildButton(BuildContext context, String value, String text) =>
       MaterialButton(
@@ -30,17 +28,16 @@ class NumbersWidget extends StatelessWidget {
             Text(
               value,
               style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 24,
-                  color: Colors.white),
+                fontWeight: FontWeight.bold,
+                fontSize: 24,
+              ),
             ),
             SizedBox(
               height: 2,
             ),
             Text(
               text,
-              style:
-                  TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+              style: TextStyle(fontWeight: FontWeight.bold),
             )
           ],
         ),

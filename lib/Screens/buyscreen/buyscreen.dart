@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:student_notes/Api/coursehelper.dart';
 import 'package:student_notes/Models/course_model.dart';
 import 'package:student_notes/Utils/colors.dart';
+import 'package:student_notes/Widgets/LoadingDialog.dart';
 
 class BuyScreen extends StatefulWidget {
   final Course course;
@@ -440,23 +441,17 @@ class _BuyScreenState extends State<BuyScreen> {
         barrierDismissible: false,
         builder: (context) {
           return WillPopScope(
-            onWillPop: () async => false,
-            child: AlertDialog(
-              content: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  Text("Request for enrollment..."),
-                  CircularProgressIndicator(),
-                ],
-              ),
-            ),
-          );
+              onWillPop: () async => false,
+              child: LoadingDialog(
+                loadText: "Requesting for Enrollment",
+              ));
         });
 
     String res = await CourseHelper.enrollCourse(widget.course.slug);
     _isloading = false;
     setState(() {});
     if (res == "201") {
+      Navigator.of(context).pop();
       Navigator.of(context).pop();
       Navigator.of(context).pop();
       Fluttertoast.showToast(

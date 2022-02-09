@@ -31,7 +31,6 @@ class _TextFieldWidgetState extends State<TextFieldWidget> {
               style: GoogleFonts.ubuntu(
                   textStyle: TextStyle(
                 fontWeight: FontWeight.bold,
-                color: Colors.white,
                 fontSize: 20,
               ))),
           SizedBox(
@@ -41,11 +40,9 @@ class _TextFieldWidgetState extends State<TextFieldWidget> {
               validator: widget.valfunction,
               maxLines: 1,
               controller: widget.textEditingController,
-              style: TextStyle(color: Colors.white),
               keyboardType: widget.textInputType,
               decoration: InputDecoration(
                   enabledBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: Colors.white),
                       borderRadius: BorderRadius.circular(12)),
                   border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12)))),

@@ -2,13 +2,16 @@ import 'dart:async';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:student_notes/Api/authhelper.dart';
 import 'package:student_notes/Screens/homescreens/homepage.dart';
 import 'package:student_notes/Screens/loginUI.dart';
+import 'package:student_notes/Screens/reset_passscreen.dart';
 import 'package:student_notes/SecuredStorage/securedstorage.dart';
 import 'package:student_notes/Utils/colors.dart';
+import 'package:uni_links/uni_links.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({Key key}) : super(key: key);
@@ -31,20 +34,44 @@ class _SplashScreenState extends State<SplashScreen>
 
   StreamSubscription subscription;
 
+  String link = "";
+
+  Future<String> initUniLinks() async {
+    // Platform messages may fail, so we use a try/catch PlatformException.
+    try {
+      final initialLink = await getInitialLink();
+
+      // print("The value of link is " + initialLink);
+      // Parse the link and warn the user, if it is not correct,
+      // but keep in mind it could be `null`.
+      return initialLink;
+    } on PlatformException {
+      Fluttertoast.showToast(msg: "Failed");
+      return null;
+    }
+  }
+
   @override
   void initState() {
     super.initState();
+    initUniLinks().then((value) => this.setState(() {
+          link = value;
+        }));
+
     checkInternetConnection();
     subscription =
         Connectivity().onConnectivityChanged.listen(showConnectivitySnackBar);
     findUserState();
     Timer(Duration(seconds: 4), () {
       if (_hasInternet) {
-        Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-                builder: (_) =>
-                    (email != null) ? MyHomePage() : LoginScreen()));
+        link == null
+            ? Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                    builder: (_) =>
+                        (email != null) ? MyHomePage() : LoginScreen()))
+            : Navigator.pushReplacement(context,
+                MaterialPageRoute(builder: (_) => ResetPasswordScreen(link)));
       } else {
         showDialog(
           barrierDismissible: false,
@@ -60,7 +87,7 @@ class _SplashScreenState extends State<SplashScreen>
                   onPressed: () async {
                     if (_hasInternet) {
                       if (email != null) {
-                        String res = await AuthHelper.updateAccessToken();
+                        await AuthHelper.updateAccessToken();
                         Fluttertoast.showToast(
                             msg: "Token refreshed from upper point");
                         Navigator.pushReplacement(context,
@@ -117,6 +144,8 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   void dispose() {
     subscription.cancel();
+    _iconController.dispose();
+
     super.dispose();
   }
 
@@ -178,7 +207,7 @@ class _SplashScreenState extends State<SplashScreen>
       ScaffoldMessenger.of(context).showSnackBar(snackBar);
     } else {
       if (email != null) {
-        String res = await AuthHelper.updateAccessToken();
+        await AuthHelper.updateAccessToken();
       }
     }
   }

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:student_notes/Utils/colors.dart';
 
 class CustomTextField extends StatelessWidget {
   final String label;
@@ -31,20 +30,15 @@ class CustomTextField extends StatelessWidget {
         controller: textEditingController,
         obscureText: obsecure,
         onChanged: onchanged,
-        style: TextStyle(color: Colors.white),
         textInputAction: TextInputAction.next,
         cursorHeight: 22,
-        cursorColor: Colors.white,
         decoration: InputDecoration(
             border: border,
-            enabled: true,
             focusedBorder: border,
             enabledBorder: border,
             prefixIcon: prefixIcon,
             suffixIcon: suffixIcon,
-            fillColor: tfColor,
             hintText: label,
-            hintStyle: TextStyle(color: Color(0xff8F8F8F)),
             filled: true),
       ),
     );

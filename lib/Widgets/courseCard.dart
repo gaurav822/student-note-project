@@ -7,6 +7,7 @@ import 'package:student_notes/Api/coursehelper.dart';
 import 'package:student_notes/Models/course_model.dart';
 import 'package:student_notes/Screens/buyscreen/buyscreen.dart';
 import 'package:student_notes/Utils/colors.dart';
+import 'package:student_notes/Widgets/LoadingDialog.dart';
 import 'package:student_notes/Widgets/custom_page_route.dart';
 
 class CourseCard extends StatelessWidget {
@@ -22,6 +23,7 @@ class CourseCard extends StatelessWidget {
         width: Get.width * .7,
         padding: EdgeInsets.only(top: 10, bottom: 10, left: 50, right: 50),
         decoration: BoxDecoration(
+            color: Theme.of(context).primaryColor,
             borderRadius: BorderRadius.circular(20),
             boxShadow: [BoxShadow(spreadRadius: .5, color: Colors.white)]),
         child: Column(
@@ -112,9 +114,9 @@ class CourseCard extends StatelessWidget {
                       "Free Content",
                       style: GoogleFonts.ubuntu(
                           textStyle: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 20,
-                      )),
+                              fontWeight: FontWeight.bold,
+                              fontSize: 20,
+                              color: Colors.black)),
                     ),
                   ),
             SizedBox(
@@ -133,7 +135,10 @@ class CourseCard extends StatelessWidget {
                         onPressed: () {
                           _enrollIntoFreeCourse(context);
                         },
-                        child: Text("Enroll")),
+                        child: Text(
+                          "Enroll",
+                          style: TextStyle(color: Colors.white),
+                        )),
                   )
                 : SizedBox()
           ],
@@ -149,14 +154,8 @@ class CourseCard extends StatelessWidget {
         builder: (context) {
           return WillPopScope(
             onWillPop: () async => false,
-            child: AlertDialog(
-              content: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  Text("Request for enrollment..."),
-                  CircularProgressIndicator(),
-                ],
-              ),
+            child: LoadingDialog(
+              loadText: "Request for Enrollment...",
             ),
           );
         });
