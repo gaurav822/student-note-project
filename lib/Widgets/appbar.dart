@@ -1,26 +1,27 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:student_notes/Screens/provider/theme_provider.dart';
-import 'package:student_notes/SecuredStorage/securedstorage.dart';
+import 'package:provider/provider.dart';
 
 import 'package:student_notes/Utils/colors.dart';
 import 'package:student_notes/Utils/internetutils.dart';
+import 'package:student_notes/provider/profileprovider.dart';
+import 'package:student_notes/provider/theme_provider.dart';
 
-Widget customAppBar(BuildContext context, String username, int _currentIndex,
-    ThemeModel themeNotifier) {
+Widget customAppBar(
+    BuildContext context, int _currentIndex, ThemeModel themeNotifier) {
   return AppBar(
     backgroundColor: primaryColor,
     actions: [
-      IconButton(
-          onPressed: () async {
-            final result = await Connectivity().checkConnectivity();
-
-            showConnectivitySnackBar(context, result);
-            final access = await SecuredStorage.getAccess();
-            print("The access token is" + access);
-          },
-          icon: Icon(Icons.refresh)),
+      // IconButton(
+      //     onPressed: () async {
+      //       final result = await Connectivity().checkConnectivity();
+      //       showConnectivitySnackBar(context, result);
+      //       print("The access token is " +
+      //           Provider.of<ProfileProvider>(context, listen: false)
+      //               .getAccessToken());
+      //     },
+      //     icon: Icon(Icons.refresh)),
       IconButton(
           icon: Icon(
               themeNotifier.isDark ? Icons.wb_sunny : Icons.nightlight_round),
@@ -40,14 +41,12 @@ Widget customAppBar(BuildContext context, String username, int _currentIndex,
               fontWeight: FontWeight.bold),
         ),
       ),
-      username != null
-          ? Text(
-              ", " + username,
-              style: GoogleFonts.lato(
-                textStyle: TextStyle(color: Colors.white, letterSpacing: .5),
-              ),
-            )
-          : CircularProgressIndicator()
+      Text(
+        ", " + Provider.of<ProfileProvider>(context, listen: false).getUname(),
+        style: GoogleFonts.lato(
+          textStyle: TextStyle(color: Colors.white, letterSpacing: .5),
+        ),
+      )
     ]),
   );
 }

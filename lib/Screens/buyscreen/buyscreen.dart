@@ -1,15 +1,24 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 import 'package:student_notes/Api/coursehelper.dart';
-import 'package:student_notes/Models/course_model.dart';
+import 'package:student_notes/Models/course_details_model.dart';
 import 'package:student_notes/Utils/colors.dart';
 import 'package:student_notes/Widgets/LoadingDialog.dart';
 
+import '../../Models/enrolled_course_model.dart';
+import '../../provider/enrolledcoursesprovider.dart';
+
+// ignore: must_be_immutable
 class BuyScreen extends StatefulWidget {
   final Course course;
-  const BuyScreen({Key key, @required this.course}) : super(key: key);
+  bool requestFromChapter = false;
+  BuyScreen({Key key, @required this.course, this.requestFromChapter})
+      : super(key: key);
 
   @override
   _BuyScreenState createState() => _BuyScreenState();
@@ -27,8 +36,10 @@ class _BuyScreenState extends State<BuyScreen> {
       actions: [
         TextButton(
           child: Text("Yes"),
-          onPressed: () {
-            _sendEnrollmentRequest(context);
+          onPressed: () async {
+            await _sendEnrollmentRequest(
+                context, "Verification pending...", widget.requestFromChapter);
+            Navigator.of(context).pop();
           },
         ),
         TextButton(
@@ -397,14 +408,14 @@ class _BuyScreenState extends State<BuyScreen> {
                 ),
                 Container(
                     width: Get.width * .3,
-                    height: 50,
+                    height: 40,
                     child: ElevatedButton(
                         style: ElevatedButton.styleFrom(
                             shape: RoundedRectangleBorder(
                               borderRadius:
-                                  BorderRadius.circular(20), // <-- Radius
+                                  BorderRadius.circular(10), // <-- Radius
                             ),
-                            primary: Colors.green),
+                            primary: Color(0xfff06315c)),
                         onPressed: () {
                           showDialog(
                             context: context,
@@ -427,13 +438,49 @@ class _BuyScreenState extends State<BuyScreen> {
             SizedBox(
               height: 20,
             ),
+            Center(
+              child: Text(
+                "OR",
+                style: TextStyle(
+                    color: Colors.grey,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold),
+              ),
+            ),
+            SizedBox(
+              height: 20,
+            ),
+            Container(
+              width: 200,
+              height: 50,
+              child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10), // <-- Radius
+                      ),
+                      primary: Color(0xfff06315c)),
+                  onPressed: () {
+                    _sendEnrollmentRequest(
+                        context,
+                        "Already enrolled in this course",
+                        widget.requestFromChapter);
+                  },
+                  child: Text(
+                    "Enroll for partial content",
+                    style: TextStyle(color: Colors.white, fontSize: 14),
+                  )),
+            ),
+            SizedBox(
+              height: 20,
+            ),
           ],
         ),
       ),
     );
   }
 
-  _sendEnrollmentRequest(BuildContext context) async {
+  _sendEnrollmentRequest(
+      BuildContext context, String message, bool requestFromChap) async {
     _isloading = true;
     setState(() {});
     showDialog(
@@ -447,34 +494,41 @@ class _BuyScreenState extends State<BuyScreen> {
               ));
         });
 
-    String res = await CourseHelper.enrollCourse(widget.course.slug);
+    String res = await CourseHelper()
+        .enrollCourse(slug: widget.course.slug, context: context);
+
     _isloading = false;
     setState(() {});
-    if (res == "201") {
-      Navigator.of(context).pop();
-      Navigator.of(context).pop();
+    if (res == "400") {
       Navigator.of(context).pop();
       Fluttertoast.showToast(
-          msg: "Course will be Activated after Payment Verification",
-          backgroundColor: Colors.green,
-          fontSize: 16,
-          toastLength: Toast.LENGTH_LONG);
-    } else if (res == "400") {
-      Navigator.of(context).pop();
-      Navigator.of(context).pop();
-      Fluttertoast.showToast(
-          msg: "Enrollment Already Requested",
+          msg: message,
           backgroundColor: Colors.red,
           fontSize: 16,
           toastLength: Toast.LENGTH_LONG);
-    } else {
-      Navigator.of(context).pop();
+    } else if (res == "404") {
       Navigator.of(context).pop();
       Fluttertoast.showToast(
         msg: "Error Requesting",
         backgroundColor: Colors.red,
         fontSize: 16,
       );
+    } else {
+      Navigator.of(context).pop();
+      Navigator.of(context).pop();
+
+      if (requestFromChap == true) {
+        Navigator.of(context).pop();
+      }
+
+      Fluttertoast.showToast(
+          msg: "Successfully Enrolled !",
+          backgroundColor: Colors.green,
+          fontSize: 16,
+          toastLength: Toast.LENGTH_LONG);
+      EnrolledCourse course = EnrolledCourse.fromMap(jsonDecode(res)["data"]);
+      Provider.of<EnrolledCourseProvider>(context, listen: false)
+          .addnewCourse(course);
     }
   }
 }

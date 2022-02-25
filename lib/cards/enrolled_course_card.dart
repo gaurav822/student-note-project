@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 import 'package:student_notes/Api/coursehelper.dart';
 import 'package:student_notes/Models/enrolled_course_model.dart';
 import 'package:student_notes/Screens/coursecontent/course_content.dart';
 import 'package:student_notes/Widgets/LoadingDialog.dart';
 import 'package:student_notes/Widgets/custom_page_route.dart';
+import 'package:student_notes/provider/enrolledcoursesprovider.dart';
 
 class EnrolledCourseCard extends StatelessWidget {
   final EnrolledCourse enrolledCourse;
@@ -33,13 +35,9 @@ class EnrolledCourseCard extends StatelessWidget {
             padding: const EdgeInsets.all(8.0),
             child: InkWell(
               onTap: () {
-                enrolledCourse.paid || !enrolledCourse.isPremium
-                    ? Navigator.of(context).push(CustomPageRoute(
-                        child: CourseContent(enrolledCourse),
-                        direction: AxisDirection.right))
-                    : Fluttertoast.showToast(
-                        msg: "Payment not verified !",
-                        backgroundColor: Colors.red.shade400);
+                Navigator.of(context).push(CustomPageRoute(
+                    child: CourseContent(enrolledCourse),
+                    direction: AxisDirection.right));
               },
               child: Column(
                 children: [
@@ -63,16 +61,18 @@ class EnrolledCourseCard extends StatelessWidget {
                   SizedBox(
                     height: 40,
                   ),
-                  enrolledCourse.paid || !enrolledCourse.isPremium
-                      ? Text(
-                          "Click to view contents",
-                          style: GoogleFonts.ubuntu(
-                              textStyle: TextStyle(
-                                  color: Colors.black,
-                                  fontWeight: FontWeight.w500,
-                                  fontSize: 20)),
-                        )
-                      : SizedBox(),
+                  Text(
+                    (enrolledCourse.isPremium)
+                        ? (enrolledCourse.paid)
+                            ? "Premium Contents"
+                            : "Partial Contents"
+                        : "Free Contents",
+                    style: GoogleFonts.ubuntu(
+                        textStyle: TextStyle(
+                            color: Colors.black,
+                            fontWeight: FontWeight.w500,
+                            fontSize: 20)),
+                  ),
                   Spacer(),
                   Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -107,8 +107,8 @@ class EnrolledCourseCard extends StatelessWidget {
                             ? IconButton(
                                 tooltip: "Delete",
                                 onPressed: () {
-                                  _unEnrollFromCourse(
-                                      enrolledCourse.slug, context);
+                                  _unEnrollFromCourse(enrolledCourse.slug,
+                                      context, enrolledCourse.courseName);
                                 },
                                 icon: Icon(
                                   Icons.delete,
@@ -125,7 +125,8 @@ class EnrolledCourseCard extends StatelessWidget {
     );
   }
 
-  Future<void> _unEnrollFromCourse(String slug, BuildContext context) async {
+  Future<void> _unEnrollFromCourse(
+      String slug, BuildContext context, String courseName) async {
     showDialog(
         context: context,
         barrierDismissible: false,
@@ -136,14 +137,17 @@ class EnrolledCourseCard extends StatelessWidget {
                 loadText: "Deleting Course",
               ));
         });
-    String res = await CourseHelper.unenrollCourse(slug);
+    String res =
+        await CourseHelper().unenrollCourse(slug: slug, context: context);
     if (res == "200") {
       Navigator.of(context).pop();
       Fluttertoast.showToast(
-          msg: "you are unenrolled from this course",
-          backgroundColor: Colors.green,
-          fontSize: 16,
+          msg: "Sucessfully unenrolled from " + courseName,
+          backgroundColor: Colors.red,
+          fontSize: 17,
           toastLength: Toast.LENGTH_LONG);
+      Provider.of<EnrolledCourseProvider>(context, listen: false)
+          .deleteCourse(enrolledCourse);
     } else {
       Navigator.of(context).pop();
       Fluttertoast.showToast(

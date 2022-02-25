@@ -3,17 +3,25 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:dio/dio.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 // ignore: implementation_imports
 import 'package:dio/src/form_data.dart' as fd;
+import 'package:provider/provider.dart';
 import 'package:student_notes/Api/userhelper.dart';
 import 'package:student_notes/Models/user_model.dart';
+import 'package:student_notes/Screens/Authscreens/loginUI.dart';
 import 'package:student_notes/SecuredStorage/securedstorage.dart';
 
-class AuthHelper {
-  // static final String url = dotenv.get('API_URL');
+import '../provider/profileprovider.dart';
 
+class AuthHelper {
   static final String url = "https://api.iscmentor.com";
+
+  AuthHelper() {
+    //
+  }
 
   static Future<String> login(String email, String password) async {
     Map data = {"username": email, "password": password};
@@ -24,7 +32,6 @@ class AuthHelper {
             'Content-Type': 'application/json; charset=UTF-8',
           },
           body: jsonEncode(data));
-
       if (res.statusCode == 200) {
         Map<String, dynamic> responsedata = jsonDecode(res.body);
         Map<String, dynamic> token = responsedata["tokens"];
@@ -32,18 +39,25 @@ class AuthHelper {
         String email = responsedata["email"];
         String accesstoken = token["access"];
         String refreshtoken = token["refresh"];
-
-        await SecuredStorage.setUsername(uname);
-        await SecuredStorage.setEmail(email);
-        await SecuredStorage.setAccess(accesstoken);
-        await SecuredStorage.setRefresh(refreshtoken);
+        await SecuredStorage.setUserDetails(
+            username: uname,
+            email: email,
+            access: accesstoken,
+            refresh: refreshtoken);
+        return res.body;
+      } else if (res.statusCode == 401) {
+        return "401";
+        //invalid credentials
+      } else {
+        return "400";
+        //email not verified
       }
-      return res.statusCode.toString();
     } on SocketException catch (e) {
-      print(e);
+      print(e.toString());
       return "404";
+      //socket or internet errors
     } catch (e) {
-      return e.toString();
+      return "404";
     }
   }
 
@@ -83,44 +97,29 @@ class AuthHelper {
     }
   }
 
-  static Future<String> logout() async {
-    // await SecuredStorage.clear();
-    String access = await SecuredStorage.getAccess();
-    String refresh = await SecuredStorage.getRefresh();
-
-    Map<String, String> requestHeaders = {
-      'Content-type': 'application/json',
-      'Accept': 'application/json',
-      'Authorization': 'Bearer ' + access,
-    };
-
+  Future<String> logout(BuildContext context) async {
     try {
       var response = await http.post(Uri.parse('$url/auth/logout/'),
-          headers: requestHeaders,
-          body: jsonEncode(<String, String>{'refresh': refresh}));
+          headers: _setHeadersForAuth(context: context),
+          body: jsonEncode(<String, String>{
+            'refresh': Provider.of<ProfileProvider>(context, listen: false)
+                .getRefreshToken()
+          }));
 
-      print("This is response for logout " + response.body);
       return response.statusCode.toString();
     } catch (e) {
       return e.toString();
     }
   }
 
-  static Future<String> changePassword(
-      String oldpass, String pass1, String pass2) async {
-    String access = await SecuredStorage.getAccess();
-    UserModel userModel = await UserHelper.getUserInfo();
-
-    Map<String, String> requestHeaders = {
-      'Content-type': 'application/json',
-      'Accept': 'application/json',
-      'Authorization': 'Bearer ' + access,
-    };
+  Future<String> changePassword(
+      String oldpass, String pass1, String pass2, BuildContext context) async {
+    UserModel userModel = await UserHelper().getUserInfo(context);
 
     try {
       var res = await http.patch(
           Uri.parse('$url/auth/change_password/${userModel.id}/'),
-          headers: requestHeaders,
+          headers: _setHeadersForAuth(context: context),
           body: jsonEncode(<String, String>{
             'old_password': oldpass,
             'password': pass1,
@@ -163,9 +162,9 @@ class AuthHelper {
 
   static Future<String> updateAccessToken() async {
     String refresh = await SecuredStorage.getRefresh();
-    String email = await SecuredStorage.getEmail();
+    String access = await SecuredStorage.getAccess();
 
-    if (email != null) {
+    if (access != null) {
       try {
         var res = await http.post(
             Uri.parse('https://api.iscmentor.com/auth/token/refresh/'),
@@ -178,8 +177,9 @@ class AuthHelper {
           Map<String, dynamic> responsedata = jsonDecode(res.body);
           String newAccessToken = responsedata["access"];
           await SecuredStorage.setAccess(newAccessToken);
-          return "200";
+          return newAccessToken;
         } else {
+          Get.offAll(LoginScreen());
           return "400";
         }
       } on SocketException catch (e) {
@@ -194,7 +194,8 @@ class AuthHelper {
     }
   }
 
-  static Future<String> googleSignIn({String authToken}) async {
+  static Future<String> googleSignIn(
+      {String authToken, BuildContext context}) async {
     Map data = {"auth_token": authToken};
 
     try {
@@ -215,10 +216,17 @@ class AuthHelper {
         String email = responsedata["email"];
         String accesstoken = token["access"];
         String refreshtoken = token["refresh"];
-        await SecuredStorage.setUsername(uname);
-        await SecuredStorage.setEmail(email);
-        await SecuredStorage.setAccess(accesstoken);
-        await SecuredStorage.setRefresh(refreshtoken);
+        await SecuredStorage.setUserDetails(
+            username: uname,
+            email: email,
+            access: accesstoken,
+            refresh: refreshtoken);
+        Provider.of<ProfileProvider>(context, listen: false).tokenSet(
+            access: accesstoken,
+            refresh: refreshtoken,
+            email: email,
+            username: uname);
+
         return "200";
       } else {
         return "404";
@@ -254,4 +262,11 @@ class AuthHelper {
       return e.toString();
     }
   }
+
+  _setHeadersForAuth({BuildContext context}) => {
+        'Content-type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization':
+            'Bearer ${Provider.of<ProfileProvider>(context, listen: false).getAccessToken()}'
+      };
 }

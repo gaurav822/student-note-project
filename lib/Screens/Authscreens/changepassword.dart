@@ -192,7 +192,8 @@ class _ChangePasswordState extends State<ChangePassword> {
         context: context,
         builder: (context) => LoadingDialog());
 
-    var response = await AuthHelper.changePassword(oldpass, pass1, pass2);
+    var response =
+        await AuthHelper().changePassword(oldpass, pass1, pass2, context);
     print(response);
     if (response == "200") {
       Navigator.of(context).pop();

@@ -15,17 +15,18 @@ class AdvertiseCard extends StatelessWidget {
           showDialog(
               context: context,
               builder: (context) {
-                return AlertDialog(
-                  content: Container(
-                    height: 200,
-                    child: ClipRRect(
-                        borderRadius: BorderRadius.circular(10),
-                        child: CachedNetworkImage(
-                          imageUrl: advertise.image,
-                          fit: BoxFit.fill,
-                          width: Get.width,
-                          height: Get.height,
-                        )),
+                return Dialog(
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(10),
+                    child: Container(
+                      height: 250,
+                      width: Get.width / 1.2,
+                      decoration: BoxDecoration(
+                          image: DecorationImage(
+                              image:
+                                  CachedNetworkImageProvider(advertise.image),
+                              fit: BoxFit.cover)),
+                    ),
                   ),
                 );
               });

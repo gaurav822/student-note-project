@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
@@ -9,16 +10,19 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:progress_state_button/iconed_button.dart';
 import 'package:progress_state_button/progress_button.dart';
+import 'package:provider/provider.dart';
 import 'package:student_notes/Api/authhelper.dart';
 import 'package:student_notes/Api/googlesigninhelper.dart';
-import 'package:student_notes/Screens/registerUI.dart';
+import 'package:student_notes/Screens/Authscreens/registerUI.dart';
 import 'package:student_notes/SecuredStorage/securedstorage.dart';
 import 'package:get/get.dart';
 import 'package:student_notes/Widgets/LoadingDialog.dart';
 import 'package:student_notes/Widgets/custom_page_route.dart';
-import 'package:student_notes/Screens/homescreens/homepage.dart';
-import 'package:student_notes/Widgets/custom_textfield.dart';
+import 'package:student_notes/Screens/homescreens/main_tab.dart';
+import 'package:student_notes/Widgets/custom_tf_signup.dart';
 import 'package:student_notes/Widgets/forgotDialogbox.dart';
+
+import '../../provider/profileprovider.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key key}) : super(key: key);
@@ -141,14 +145,13 @@ class _LoginScreenState extends State<LoginScreen> {
             builder: (context) => WillPopScope(
                 onWillPop: () async => false, child: LoadingDialog()));
         final GoogleSignInAuthentication googleAuth = await user.authentication;
-        log("The new id token" + googleAuth.idToken);
         await SecuredStorage.setGAuthKey(googleAuth.idToken);
-        String res =
-            await AuthHelper.googleSignIn(authToken: googleAuth.idToken);
-        print("This is res " + res);
+
+        String res = await AuthHelper.googleSignIn(
+            authToken: googleAuth.idToken, context: context);
+
         if (res == "200") {
           Navigator.of(context).pop();
-
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(
             content:
                 Text("Login Successful", style: TextStyle(color: Colors.white)),
@@ -378,26 +381,28 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> loginProgress() async {
     FocusScopeNode currentFocus = FocusScope.of(context);
-
     if (!currentFocus.hasPrimaryFocus) {
       currentFocus.unfocus();
     }
     if (_formKey.currentState.validate()) {
       _buttonState = ButtonState.loading;
       setState(() {});
-      String statusCode = await AuthHelper.login(
+      String result = await AuthHelper.login(
           usernameController.text.toString(), passController.text.toString());
 
-      print("This is statuscode" + statusCode);
-
-      if (statusCode == "200") {
-        Future.delayed(Duration(seconds: 2)).then((value) {
-          Navigator.of(context).push(CustomPageRoute(
-              child: MyHomePage(), direction: AxisDirection.right));
+      if (result == "401") {
+        Future.delayed(Duration(seconds: 3)).then((value) {
+          _buttonState = ButtonState.idle;
+          setState(() {});
         });
-        _buttonState = ButtonState.success;
+        _buttonState = ButtonState.fail;
         setState(() {});
-      } else if (statusCode == "400") {
+        Fluttertoast.showToast(
+            backgroundColor: Colors.red,
+            gravity: ToastGravity.CENTER,
+            toastLength: Toast.LENGTH_LONG,
+            msg: "username or password is incorrect");
+      } else if (result == "400") {
         Future.delayed(Duration(seconds: 3)).then((value) {
           _buttonState = ButtonState.idle;
           setState(() {});
@@ -410,7 +415,7 @@ class _LoginScreenState extends State<LoginScreen> {
             toastLength: Toast.LENGTH_LONG,
             msg:
                 "please verify your email address first. hint: check spam folder");
-      } else if (statusCode == "404") {
+      } else if (result == "404") {
         Future.delayed(Duration(seconds: 3)).then((value) {
           _buttonState = ButtonState.idle;
           setState(() {});
@@ -423,17 +428,24 @@ class _LoginScreenState extends State<LoginScreen> {
             toastLength: Toast.LENGTH_LONG,
             msg: "Please check internet Connection");
       } else {
-        Future.delayed(Duration(seconds: 3)).then((value) {
-          _buttonState = ButtonState.idle;
-          setState(() {});
+        Map<String, dynamic> responsedata = jsonDecode(result);
+        Map<String, dynamic> token = responsedata["tokens"];
+        String uname = responsedata["username"];
+        String email = responsedata["email"];
+        String accesstoken = token["access"];
+        String refreshtoken = token["refresh"];
+        Provider.of<ProfileProvider>(context, listen: false).tokenSet(
+            access: accesstoken,
+            refresh: refreshtoken,
+            email: email,
+            username: uname);
+
+        Future.delayed(Duration(seconds: 2)).then((value) {
+          Navigator.of(context).push(CustomPageRoute(
+              child: MyHomePage(), direction: AxisDirection.right));
         });
-        _buttonState = ButtonState.fail;
+        _buttonState = ButtonState.success;
         setState(() {});
-        Fluttertoast.showToast(
-            backgroundColor: Colors.red,
-            gravity: ToastGravity.CENTER,
-            toastLength: Toast.LENGTH_LONG,
-            msg: "username or password is incorrect");
       }
     }
   }

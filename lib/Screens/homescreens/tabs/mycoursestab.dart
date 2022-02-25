@@ -1,10 +1,11 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 import 'package:student_notes/Api/coursehelper.dart';
 import 'package:student_notes/Models/enrolled_course_model.dart';
-import 'package:student_notes/Widgets/enrolled_course_card.dart';
+import 'package:student_notes/cards/enrolled_course_card.dart';
+import 'package:student_notes/provider/enrolledcoursesprovider.dart';
 
 class MyCourse extends StatefulWidget {
   const MyCourse({Key key}) : super(key: key);
@@ -14,75 +15,71 @@ class MyCourse extends StatefulWidget {
 }
 
 class _MyCourseState extends State<MyCourse> {
-  StreamController<EnrolledCourseModel> _enrolledCourseStream =
-      StreamController();
-  Timer _timer;
-
+  bool _isLoading = true;
   @override
   void initState() {
     super.initState();
-    _timer = new Timer.periodic(Duration(seconds: 3), (timer) {
-      getEnrolledCourses();
-    });
+    getEnrolledCourses();
   }
 
   @override
   void dispose() {
     super.dispose();
-    _timer?.cancel();
-    _enrolledCourseStream.close();
   }
 
   Future<void> getEnrolledCourses() async {
-    EnrolledCourseModel enrolledCourseModel = await CourseHelper.getMyCourses();
+    _isLoading = true;
+    EnrolledCourseModel enrolledCourseModel =
+        await CourseHelper().getMyCourses(context: context);
+    List<EnrolledCourse> mycourse = enrolledCourseModel.results;
 
-    if (!_enrolledCourseStream.isClosed) {
-      _enrolledCourseStream.sink.add(enrolledCourseModel);
+    if (mounted) {
+      Provider.of<EnrolledCourseProvider>(context, listen: false)
+          .setMyCourses(mycourse);
+      _isLoading = false;
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-        child: StreamBuilder<EnrolledCourseModel>(
-            stream: _enrolledCourseStream.stream,
-            builder: (context, snapdata) {
-              switch (snapdata.connectionState) {
-                case ConnectionState.waiting:
-                  return Center(
-                    child: CircularProgressIndicator(),
-                  );
-
-                default:
-                  if (snapdata.hasError) {
-                    return Center(child: Text("Error Loading Data"));
-                  }
-                  if (snapdata.data.results.isBlank) {
-                    return Center(
-                        child: Text("you are not enrolled in any courses",
-                            style: GoogleFonts.ubuntu(
-                                textStyle: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.red))));
-                  } else {
-                    return Container(
+    return Consumer<EnrolledCourseProvider>(
+        builder: (context, enrolledcourse, child) => _isLoading
+            ? Center(
+                child: CircularProgressIndicator(),
+              )
+            : enrolledcourse.enrolledCourses.isEmpty
+                ? Center(
+                    child: Text(
+                      "You are not enrolled to any courses",
+                      style: GoogleFonts.ubuntu(
+                          textStyle:
+                              TextStyle(fontSize: 18, color: Colors.red)),
+                    ),
+                  )
+                : Container(
+                    child: RefreshIndicator(
+                      onRefresh: () async {
+                        getEnrolledCourses();
+                        setState(() {});
+                        return true;
+                      },
                       child: ListView.builder(
                           scrollDirection: Axis.vertical,
                           shrinkWrap: true,
-                          physics: BouncingScrollPhysics(),
-                          itemCount: snapdata.data.results.length,
+                          physics: BouncingScrollPhysics(
+                              parent: AlwaysScrollableScrollPhysics()),
+                          itemCount: enrolledcourse.enrolledCourses.length,
                           itemBuilder: (BuildContext context, int index) {
                             return Padding(
                               padding:
                                   const EdgeInsets.symmetric(horizontal: 10),
                               child: EnrolledCourseCard(
-                                  snapdata.data.results[index]),
+                                  enrolledcourse.enrolledCourses[
+                                      enrolledcourse.enrolledCourses.length -
+                                          (index + 1)]),
                             );
                           }),
-                    );
-                  }
-              }
-            }));
+                    ),
+                  ));
   }
 }

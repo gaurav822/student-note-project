@@ -5,10 +5,10 @@ import 'package:form_field_validator/form_field_validator.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:student_notes/Api/authhelper.dart';
-import 'package:student_notes/Screens/loginUI.dart';
+import 'package:student_notes/Screens/Authscreens/loginUI.dart';
 import 'package:student_notes/Utils/colors.dart';
 import 'package:student_notes/Widgets/LoadingDialog.dart';
-import 'package:student_notes/Widgets/custom_textfield.dart';
+import 'package:student_notes/Widgets/custom_tf_signup.dart';
 
 // ignore: must_be_immutable
 class ResetPasswordScreen extends StatefulWidget {

@@ -4,11 +4,15 @@ import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 import 'package:student_notes/Api/coursehelper.dart';
-import 'package:student_notes/Models/course_model.dart';
+import 'package:student_notes/Models/course_details_model.dart';
 import 'package:student_notes/Models/search_course_model.dart';
 import 'package:student_notes/Screens/searchresult/searchresultpage.dart';
-import 'package:student_notes/Widgets/courseCard.dart';
+import 'package:student_notes/cards/courseCard.dart';
+import 'package:student_notes/provider/profileprovider.dart';
+
+import '../../../SecuredStorage/securedstorage.dart';
 
 class BrowseCourse extends StatefulWidget {
   const BrowseCourse({Key key}) : super(key: key);
@@ -20,11 +24,13 @@ class BrowseCourse extends StatefulWidget {
 class _BrowseCourseState extends State<BrowseCourse> {
   TextEditingController textController = TextEditingController();
   StreamController<CourseList> _allCourseStream = StreamController();
+  CourseList courseList;
 
   StreamController<SearchCourseModel> searchCourseStream =
       StreamController<SearchCourseModel>.broadcast();
 
   bool _isSearching = false;
+  bool _isLoading = true;
 
   @override
   void dispose() {
@@ -37,33 +43,29 @@ class _BrowseCourseState extends State<BrowseCourse> {
   @override
   void initState() {
     super.initState();
+    setAccessToken();
     fetchAllCoursesList();
   }
 
-  Future<void> fetchAllCoursesList() async {
-    CourseList allCourses = await CourseHelper.listCourses();
+  Future<void> setAccessToken() async {
+    String access = await SecuredStorage.getAccess();
+    Provider.of<ProfileProvider>(context, listen: false).setAccess(access);
+  }
 
-    if (!_allCourseStream.isClosed) {
-      _allCourseStream.sink.add(allCourses);
+  Future<void> fetchAllCoursesList() async {
+    _isLoading = true;
+    CourseList allCourses = await CourseHelper().listCourses(context: context);
+    courseList = allCourses;
+    _isLoading = false;
+    if (mounted) {
+      setState(() {});
     }
   }
 
   Future<void> fetchSearchedCoursesList() async {
-    SearchCourseModel searchCourseModel =
-        await CourseHelper.searchCourse(searchQuery: textController.text);
+    SearchCourseModel searchCourseModel = await CourseHelper()
+        .searchCourse(searchQuery: textController.text, context: context);
 
-    //converting search model to CourseDetail Model
-    // List<Course> lists = [];
-    // lists.length = searchCourseModel.results.length;
-    // for (int i = 0; i < lists.length; i++) {
-    //   if (searchCourseModel.results[i].courseName != null) {
-    //     Course eachCourse = await CourseHelper.getCourseDetail(
-    //         searchCourseModel.results[i].courseSlug);
-    //     lists[i] = eachCourse;
-    //   }
-    // }
-    // _searchedCourses = lists;
-    // setState(() {});
     if (!searchCourseStream.isClosed) {
       searchCourseStream.sink.add(searchCourseModel);
     }
@@ -99,9 +101,9 @@ class _BrowseCourseState extends State<BrowseCourse> {
                   }
                 },
                 onFieldSubmitted: (value) {
-                  if (value.isEmpty) {
+                  if (value.isEmpty || value.length < 3) {
                     Fluttertoast.showToast(
-                        msg: "Please enter something..",
+                        msg: "Please enter at least 3 character",
                         backgroundColor: Colors.red,
                         fontSize: 16);
                   } else {
@@ -144,51 +146,46 @@ class _BrowseCourseState extends State<BrowseCourse> {
             ),
             Expanded(
               child: Stack(children: [
-                StreamBuilder<CourseList>(
-                    stream: _allCourseStream.stream,
-                    builder: (context, snapdata) {
-                      switch (snapdata.connectionState) {
-                        case ConnectionState.waiting:
-                          return Center(
-                            child: CircularProgressIndicator(),
-                          );
-
-                        default:
-                          if (snapdata.hasError) {
-                            return Center(child: Text("Error Loading Data"));
-                          }
-                          if (snapdata.data.results.isBlank) {
-                            return Center(
-                                child: Text("No data Found",
-                                    style: GoogleFonts.ubuntu(
-                                        textStyle: TextStyle(
-                                            fontSize: 18,
-                                            fontWeight: FontWeight.bold,
-                                            color: Colors.red))));
-                          } else {
-                            return Container(
-                              child: Center(
+                _isLoading
+                    ? Center(
+                        child: CircularProgressIndicator(),
+                      )
+                    : courseList.results.isEmpty
+                        ? Center(
+                            child: Text(
+                              "No data found",
+                              style: GoogleFonts.ubuntu(
+                                  textStyle: TextStyle(
+                                      fontSize: 20, color: Colors.red)),
+                            ),
+                          )
+                        : Container(
+                            child: Center(
+                              child: RefreshIndicator(
+                                onRefresh: () async {
+                                  fetchAllCoursesList();
+                                  setState(() {});
+                                  return true;
+                                },
                                 child: ListView.builder(
                                     scrollDirection: Axis.vertical,
                                     shrinkWrap: true,
                                     physics: BouncingScrollPhysics(
                                         parent:
                                             AlwaysScrollableScrollPhysics()),
-                                    itemCount: snapdata.data.results.length,
+                                    itemCount: courseList.results.length,
                                     itemBuilder:
                                         (BuildContext context, int index) {
                                       return Padding(
                                         padding: const EdgeInsets.symmetric(
                                             horizontal: 20, vertical: 5),
                                         child: CourseCard(
-                                            snapdata.data.results[index]),
+                                            courseList.results[index]),
                                       );
                                     }),
                               ),
-                            );
-                          }
-                      }
-                    }),
+                            ),
+                          ),
                 _isSearching
                     ? StreamBuilder<SearchCourseModel>(
                         stream: searchCourseStream.stream,

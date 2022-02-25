@@ -4,13 +4,15 @@ import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:provider/provider.dart';
 import 'package:student_notes/Api/userhelper.dart';
 import 'package:student_notes/Models/user_model.dart';
 import 'package:student_notes/Utils/colors.dart';
 import 'package:student_notes/Widgets/LoadingDialog.dart';
 import 'package:student_notes/Widgets/datepickerWidget.dart';
 import 'package:student_notes/Widgets/profile_widget.dart';
-import 'package:student_notes/Widgets/textfieldwidget.dart';
+import 'package:student_notes/Widgets/custom_tf_editprofile.dart';
+import 'package:student_notes/provider/profileprovider.dart';
 
 class EditProfilePage extends StatefulWidget {
   const EditProfilePage({Key key, @required this.userModel}) : super(key: key);
@@ -44,6 +46,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
     studyLevelController = TextEditingController(text: widget.userModel.level);
     courseNameController =
         TextEditingController(text: widget.userModel.courseName);
+    print(widget.userModel.image);
   }
 
   File image;
@@ -78,35 +81,40 @@ class _EditProfilePageState extends State<EditProfilePage> {
                 SizedBox(
                   height: 30,
                 ),
-                ProfileWidget(
-                    imagePath: widget.userModel.image,
-                    isEdit: true,
-                    onClicked: () async {
-                      await pickImage();
-                      if (image != null) {
-                        showDialog(
-                            barrierDismissible: false,
-                            context: context,
-                            builder: (context) {
-                              return WillPopScope(
-                                  onWillPop: () async => false,
-                                  child: LoadingDialog(
-                                    loadText: "Uploading...",
-                                  ));
-                            });
-                        String res =
-                            await UserHelper.updateProfilePicture(image);
-                        if (res == "200") {
-                          int count = 0;
-                          Navigator.of(context).popUntil((_) => count++ >= 2);
-                          Fluttertoast.showToast(
-                              msg: "Image Upload Successful");
-                        } else {
-                          Navigator.of(context).pop();
-                          Fluttertoast.showToast(msg: "Upload Failed");
+                Consumer<ProfileProvider>(
+                  builder: (context, prof, child) => ProfileWidget(
+                      imagePath: prof.profileImage,
+                      isEdit: true,
+                      onClicked: () async {
+                        await pickImage();
+                        if (image != null) {
+                          showDialog(
+                              barrierDismissible: false,
+                              context: context,
+                              builder: (context) {
+                                return WillPopScope(
+                                    onWillPop: () async => false,
+                                    child: LoadingDialog(
+                                      loadText: "Uploading...",
+                                    ));
+                              });
+                          String res = await UserHelper()
+                              .updateProfilePicture(image, context);
+                          if (res != "404") {
+                            int count = 0;
+                            Navigator.of(context).popUntil((_) => count++ >= 2);
+                            Fluttertoast.showToast(
+                                msg: "Image Upload Successful",
+                                backgroundColor: Colors.green);
+                            Provider.of<ProfileProvider>(context, listen: false)
+                                .setProfileImage(res);
+                          } else {
+                            Navigator.of(context).pop();
+                            Fluttertoast.showToast(msg: "Upload Failed");
+                          }
                         }
-                      }
-                    }),
+                      }),
+                ),
                 SizedBox(
                   height: 24,
                 ),
@@ -293,16 +301,25 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
     print("The details are " + name + phone + dob + institute + address);
 
-    String response = await UserHelper.updateUserInfo(
+    String response = await UserHelper().updateUserInfo(
         fullName: name,
         phoneNumber: phone,
         dateOfBirth: dob,
         institute: institute,
         address: address,
         coursename: courseName,
-        studylevel: studyLevel);
+        studylevel: studyLevel,
+        context: context);
 
     if (response == "200") {
+      Provider.of<ProfileProvider>(context, listen: false).updateUserProfile(
+          name: name,
+          address: address,
+          courseName: courseName,
+          dob: dob,
+          institute: institute,
+          phone: phone,
+          studyLevel: studyLevel);
       int count = 0;
       Navigator.of(context).popUntil((_) => count++ >= 2);
       Fluttertoast.showToast(

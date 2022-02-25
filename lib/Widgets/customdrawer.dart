@@ -2,19 +2,30 @@ import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 import 'package:student_notes/Api/authhelper.dart';
 import 'package:student_notes/Api/googlesigninhelper.dart';
-import 'package:student_notes/Screens/changepassword.dart';
+import 'package:student_notes/Screens/Authscreens/changepassword.dart';
 import 'package:student_notes/Screens/homescreens/profile/profilepage.dart';
-import 'package:student_notes/Screens/loginUI.dart';
+import 'package:student_notes/Screens/Authscreens/loginUI.dart';
 import 'package:student_notes/SecuredStorage/securedstorage.dart';
 import 'package:student_notes/Utils/colors.dart';
 import 'package:student_notes/Widgets/LoadingDialog.dart';
 import 'package:student_notes/Widgets/custom_page_route.dart';
 
-class CustomDrawer extends StatelessWidget {
-  final String _imageUrl;
-  CustomDrawer(this._imageUrl);
+import '../provider/profileprovider.dart';
+
+class CustomDrawer extends StatefulWidget {
+  @override
+  State<CustomDrawer> createState() => _CustomDrawerState();
+}
+
+class _CustomDrawerState extends State<CustomDrawer> {
+  @override
+  void initState() {
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
     TextStyle style = GoogleFonts.ubuntu(fontSize: 16);
@@ -30,25 +41,27 @@ class CustomDrawer extends StatelessWidget {
                   color: primaryColor,
                   width: double.infinity,
                   padding: EdgeInsets.symmetric(horizontal: 10),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      SizedBox(
-                        height: 20,
-                      ),
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(60),
-                        child: (Image.network(
-                          _imageUrl != null
-                              ? _imageUrl
-                              : "https://api.iscmentor.com/media/profile_img/default.jpg",
-                          height: 110,
-                          width: 120,
-                          fit: BoxFit.fitWidth,
-                        )),
-                      )
-                    ],
-                  )),
+                  child: Consumer<ProfileProvider>(
+                      builder: ((context, profile, child) => Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              SizedBox(
+                                height: 20,
+                              ),
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(60),
+                                child: (profile.getProfileImage() != null
+                                    ? Image.network(
+                                        profile.getProfileImage(),
+                                        height: 110,
+                                        width: 120,
+                                        fit: BoxFit.fitWidth,
+                                      )
+                                    : Center(
+                                        child: CircularProgressIndicator())),
+                              )
+                            ],
+                          )))),
               ListTile(
                 onTap: () {
                   Navigator.of(context).pop();
@@ -108,23 +121,25 @@ class CustomDrawer extends StatelessWidget {
                             loadText: "Logging out...",
                           ));
 
-                  String res = await AuthHelper.logout();
+                  String res = await AuthHelper().logout(context);
 
                   if (res == "204") {
                     Navigator.of(context).pushAndRemoveUntil(
                         MaterialPageRoute(builder: (context) => LoginScreen()),
                         (route) => false);
-
                     final gAuthKey = await SecuredStorage.getGAuthKey();
                     if (gAuthKey != null) {
                       await GoogleSignInHelper.logout();
                     }
                     await SecuredStorage.clear();
+
                     EasyLoading.showSuccess("Logout Successful");
                   } else {
                     Navigator.of(context).pop();
                     Navigator.of(context).pop();
-                    Fluttertoast.showToast(msg: "There is a Problem");
+                    Fluttertoast.showToast(
+                        msg: "Problem logging out...",
+                        backgroundColor: Colors.red);
                   }
                 },
                 title: Text(

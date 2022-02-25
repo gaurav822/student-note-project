@@ -8,7 +8,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:progress_state_button/iconed_button.dart';
 import 'package:progress_state_button/progress_button.dart';
 import 'package:student_notes/Api/authhelper.dart';
-import 'package:student_notes/Widgets/custom_textfield.dart';
+import 'package:student_notes/Widgets/custom_tf_signup.dart';
 
 class RegistrationScreen extends StatefulWidget {
   const RegistrationScreen({Key key}) : super(key: key);

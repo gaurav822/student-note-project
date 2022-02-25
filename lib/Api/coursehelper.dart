@@ -1,38 +1,33 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
-import 'package:student_notes/Models/course_content_model.dart';
-import 'package:student_notes/Models/course_model.dart';
+import 'package:provider/provider.dart';
+import 'package:student_notes/Models/course_details_model.dart';
 import 'package:student_notes/Models/eachchapterqmodel.dart';
 import 'package:student_notes/Models/enrolled_course_model.dart';
 import 'package:student_notes/Models/questiondetailmodel.dart';
 import 'package:student_notes/Models/search_course_model.dart';
-import 'package:student_notes/SecuredStorage/securedstorage.dart';
+import '../provider/profileprovider.dart';
 
 class CourseHelper {
   static final String url = dotenv.get('API_URL');
 
-  static Future<String> enrollCourse(String slug) async {
-    String access = await SecuredStorage.getAccess();
+  CourseHelper() {
+    //
+  }
 
-    Map<String, String> requestHeaders = {
-      'Content-type': 'application/json',
-      'Accept': 'application/json',
-      'Authorization': 'Bearer ' + access,
-    };
-
+  Future<String> enrollCourse({String slug, BuildContext context}) async {
     Map data = {"slug": slug};
 
     try {
       var response = await http.post(Uri.parse('$url/course/enroll/'),
-          headers: requestHeaders, body: jsonEncode(data));
+          headers: _setHeadersForCourse(context: context),
+          body: jsonEncode(data));
       if (response.statusCode == 201) {
-        return "201";
+        return response.body;
         //success
-      } else if (response.statusCode == 401) {
-        return "401";
-        //bad authorization
       } else if (response.statusCode == 400) {
         return "400";
         //already enrolled
@@ -40,24 +35,17 @@ class CourseHelper {
         return "404";
       }
     } catch (e) {
-      return e.toString();
+      return "404";
     }
   }
 
-  static Future<String> unenrollCourse(String slug) async {
-    String access = await SecuredStorage.getAccess();
-
-    Map<String, String> requestHeaders = {
-      'Content-type': 'application/json',
-      'Accept': 'application/json',
-      'Authorization': 'Bearer ' + access,
-    };
-
+  Future<String> unenrollCourse({String slug, BuildContext context}) async {
     Map data = {"slug": slug};
 
     try {
       var response = await http.post(Uri.parse('$url/course/unenroll/'),
-          headers: requestHeaders, body: jsonEncode(data));
+          headers: _setHeadersForCourse(context: context),
+          body: jsonEncode(data));
       if (response.statusCode == 200) {
         return "200";
         //success
@@ -66,22 +54,15 @@ class CourseHelper {
         return "404";
       }
     } catch (e) {
+      print(e.toString());
       return e.toString();
     }
   }
 
-  static Future<EnrolledCourseModel> getMyCourses() async {
-    String access = await SecuredStorage.getAccess();
-
-    Map<String, String> requestHeaders = {
-      'Content-type': 'application/json',
-      'Accept': 'application/json',
-      'Authorization': 'Bearer ' + access,
-    };
-
+  Future<EnrolledCourseModel> getMyCourses({BuildContext context}) async {
     try {
       var response = await http.get(Uri.parse('$url/course/mycourse/'),
-          headers: requestHeaders);
+          headers: _setHeadersForCourse(context: context));
       if (response.statusCode == 200) {
         return EnrolledCourseModel.fromJson(response.body);
       } else {
@@ -92,16 +73,10 @@ class CourseHelper {
     }
   }
 
-  static Future<CourseList> listCourses(
-      {bool sortByPopular = false, bool sortByNew = false}) async {
-    String access = await SecuredStorage.getAccess();
-
-    Map<String, String> requestHeaders = {
-      'Content-type': 'application/json',
-      'Accept': 'application/json',
-      'Authorization': 'Bearer ' + access
-    };
-
+  Future<CourseList> listCourses(
+      {bool sortByPopular = false,
+      bool sortByNew = false,
+      BuildContext context}) async {
     String finalUrl = sortByPopular
         ? url + '/course/popular-course/'
         : sortByNew
@@ -109,146 +84,119 @@ class CourseHelper {
             : url + '/course/all/';
 
     try {
-      var response =
-          await http.get(Uri.parse(finalUrl), headers: requestHeaders);
+      var response = await http.get(Uri.parse(finalUrl),
+          headers: _setHeadersForCourse(context: context));
 
       return CourseList.fromJson(response.body);
     } catch (e) {
-      print(e.toString());
       return CourseList(count: 0, next: 0, previous: 0, results: []);
     }
   }
 
-  static Future<CourseContents> getCourseContents(String slugName) async {
-    String access = await SecuredStorage.getAccess();
-
-    Map<String, String> requestHeaders = {
-      'Content-type': 'application/json',
-      'Accept': 'application/json',
-      'Authorization': 'Bearer ' + access,
-    };
-
+  Future<String> getCourseContents(
+      {String slugName, BuildContext context}) async {
     try {
       var response = await http.get(Uri.parse('$url/course/content/$slugName/'),
-          headers: requestHeaders);
+          headers: _setHeadersForCourse(context: context));
+      Map<String, dynamic> result =
+          json.decode(utf8.decode(response.bodyBytes));
+
+      var finalres = json.encode(result);
+
       if (response.statusCode == 200) {
-        print(response.body);
-        return CourseContents.fromJson(response.body);
+        return finalres;
       } else {
-        return null;
+        return "400";
       }
     } catch (e) {
-      print(e.toString());
-      return null;
+      return "400";
     }
   }
 
-  static Future<SearchCourseModel> searchCourse({String searchQuery}) async {
-    String access = await SecuredStorage.getAccess();
-
-    Map<String, String> requestHeaders = {
-      'Content-type': 'application/json',
-      'Accept': 'application/json',
-      'Authorization': 'Bearer ' + access,
-    };
-
+  Future<SearchCourseModel> searchCourse(
+      {String searchQuery, BuildContext context}) async {
     try {
       var response = await http.get(
           Uri.parse('$url/course/search/?search=$searchQuery'),
-          headers: requestHeaders);
+          headers: _setHeadersForCourse(context: context));
+
+      Map<String, dynamic> result =
+          json.decode(utf8.decode(response.bodyBytes));
+
+      var finalres = json.encode(result);
 
       if (response.statusCode == 200) {
-        return SearchCourseModel.fromJson(response.body);
+        return SearchCourseModel.fromJson(finalres);
       } else {
-        print("printing from here");
         return SearchCourseModel(count: 0, next: 0, previous: 0, results: []);
       }
     } catch (e) {
-      print("printing from catch");
       return SearchCourseModel(count: 0, next: 0, previous: 0, results: []);
     }
   }
 
-  static Future<Course> getCourseDetail(String slug) async {
-    String access = await SecuredStorage.getAccess();
-
-    Map<String, String> requestHeaders = {
-      'Content-type': 'application/json',
-      'Accept': 'application/json',
-      'Authorization': 'Bearer ' + access,
-    };
+  Future<Course> getCourseDetail({String slug, BuildContext context}) async {
     try {
       var res = await http.get(Uri.parse('$url/course/detail/$slug'),
-          headers: requestHeaders);
+          headers: _setHeadersForCourse(context: context));
 
       if (res.statusCode == 200) {
-        print(res.body);
         return Course.fromJson(res.body);
       } else {
-        print("printing the null value from here");
         return null;
       }
     } catch (e) {
-      print("Catch from here");
-      print(e.toString());
       return null;
     }
   }
 
-  static Future<QuestionDetailModel> fetchQuestion(
-      int courseId, int chapterId, int questionId) async {
-    String access = await SecuredStorage.getAccess();
-
-    Map<String, String> requestHeaders = {
-      'Content-type': 'application/json',
-      'Accept': 'application/json',
-      'Authorization': 'Bearer ' + access,
-    };
-
+  Future<QuestionDetailModel> fetchQuestion(
+      {int courseId,
+      int chapterId,
+      int questionId,
+      BuildContext context}) async {
     try {
       var res = await http.get(
           Uri.parse('$url/course/$courseId/$chapterId/$questionId'),
-          headers: requestHeaders);
+          headers: _setHeadersForCourse(context: context));
+      Map<String, dynamic> result = json.decode(utf8.decode(res.bodyBytes));
+
+      var finalres = json.encode(result);
 
       if (res.statusCode == 200) {
-        print(res.body);
-        return QuestionDetailModel.fromJson(res.body);
+        return QuestionDetailModel.fromJson(finalres);
       } else {
-        print("From here...");
         return null;
       }
     } catch (e) {
-      print("Catch from here");
-      print(e.toString());
       return null;
     }
   }
 
-  static Future<EachChapterQModel> fetchCoursebyChapter(
-      int courseId, int chapterId) async {
-    String access = await SecuredStorage.getAccess();
-
-    Map<String, String> requestHeaders = {
-      'Content-type': 'application/json',
-      'Accept': 'application/json',
-      'Authorization': 'Bearer ' + access,
-    };
-
+  Future<EachChapterQModel> fetchCoursebyChapter(
+      {int courseId, int chapterId, BuildContext context}) async {
     try {
       var res = await http.get(Uri.parse('$url/course/$courseId/$chapterId'),
-          headers: requestHeaders);
+          headers: _setHeadersForCourse(context: context));
+
+      Map<String, dynamic> result = json.decode(utf8.decode(res.bodyBytes));
+
+      var finalres = json.encode(result);
 
       if (res.statusCode == 200) {
-        print(res.body);
-        return EachChapterQModel.fromJson(res.body);
+        return EachChapterQModel.fromJson(finalres);
       } else {
-        print("From here...");
         return EachChapterQModel(count: 0, next: 0, previous: 0, results: []);
       }
     } catch (e) {
-      print("Catch from here");
-      print(e.toString());
       return EachChapterQModel(count: 0, next: 0, previous: 0, results: []);
     }
   }
+
+  _setHeadersForCourse({BuildContext context}) => {
+        'Content-type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization':
+            'Bearer ${Provider.of<ProfileProvider>(context, listen: false).getAccessToken()}'
+      };
 }

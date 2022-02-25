@@ -22,15 +22,15 @@ class UserModel {
 
   final int id;
   final String username;
-  final String name;
-  final String email;
-  final String phoneNumber;
-  final String image;
-  final dynamic dob;
-  final dynamic institute;
-  final dynamic address;
-  final dynamic level;
-  final dynamic courseName;
+  String name;
+  String email;
+  String phoneNumber;
+  String image;
+  dynamic dob;
+  dynamic institute;
+  dynamic address;
+  dynamic level;
+  dynamic courseName;
 
   factory UserModel.fromJson(String str) => UserModel.fromMap(json.decode(str));
 

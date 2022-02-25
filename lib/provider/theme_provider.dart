@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:student_notes/Screens/provider/theme_preferences.dart';
+import 'package:student_notes/provider/theme_preferences.dart';
 
 class ThemeModel extends ChangeNotifier {
   bool _isDark = true;
@@ -26,7 +26,7 @@ class ThemeModel extends ChangeNotifier {
 
 class MyThemes {
   static final backColor = const Color(0xfff191720);
-  static final primary = const Color(0xff002244);
+  static final primary = Color.fromARGB(255, 41, 41, 41);
 
   static final darkTheme = ThemeData(
     primaryColor: Colors.white,

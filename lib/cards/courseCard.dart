@@ -1,14 +1,18 @@
+import 'dart:convert';
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 import 'package:student_notes/Api/coursehelper.dart';
-import 'package:student_notes/Models/course_model.dart';
+import 'package:student_notes/Models/course_details_model.dart';
+import 'package:student_notes/Models/enrolled_course_model.dart';
 import 'package:student_notes/Screens/buyscreen/buyscreen.dart';
 import 'package:student_notes/Utils/colors.dart';
 import 'package:student_notes/Widgets/LoadingDialog.dart';
 import 'package:student_notes/Widgets/custom_page_route.dart';
+import 'package:student_notes/provider/enrolledcoursesprovider.dart';
 
 class CourseCard extends StatelessWidget {
   final Course course;
@@ -160,29 +164,35 @@ class CourseCard extends StatelessWidget {
           );
         });
 
-    String res = await CourseHelper.enrollCourse(course.slug);
+    String result =
+        await CourseHelper().enrollCourse(slug: course.slug, context: context);
 
-    if (res == "201") {
-      Navigator.of(context).pop();
-      Fluttertoast.showToast(
-          msg: "Enrolled Successfully !",
-          backgroundColor: Colors.green,
-          fontSize: 16,
-          toastLength: Toast.LENGTH_LONG);
-    } else if (res == "400") {
+    if (result == "400") {
       Navigator.of(context).pop();
       Fluttertoast.showToast(
           msg: "Already Enrolled in this Course",
           backgroundColor: Colors.red,
           fontSize: 16,
           toastLength: Toast.LENGTH_LONG);
-    } else {
+    } else if (result == "404") {
       Navigator.of(context).pop();
       Fluttertoast.showToast(
         msg: "Error Enrolling",
         backgroundColor: Colors.red,
         fontSize: 16,
       );
+    } else {
+      Navigator.of(context).pop();
+      EnrolledCourse course =
+          EnrolledCourse.fromMap(jsonDecode(result)["data"]);
+      Fluttertoast.showToast(
+          msg: "Enrolled Successfully to " + course.courseName,
+          backgroundColor: Colors.green,
+          fontSize: 17,
+          toastLength: Toast.LENGTH_LONG);
+
+      Provider.of<EnrolledCourseProvider>(context, listen: false)
+          .addnewCourse(course);
     }
   }
 }

@@ -5,6 +5,8 @@
 import 'package:meta/meta.dart';
 import 'dart:convert';
 
+import 'package:student_notes/Models/eachchapterqmodel.dart';
+
 class CourseContents {
   CourseContents({
     @required this.id,
@@ -84,7 +86,7 @@ class Chapter {
   });
 
   final int id;
-  final List<dynamic> questions;
+  final List<Question> questions;
   final String chapterTitle;
   final int course;
 
@@ -94,14 +96,15 @@ class Chapter {
 
   factory Chapter.fromMap(Map<String, dynamic> json) => Chapter(
         id: json["id"],
-        questions: List<dynamic>.from(json["questions"].map((x) => x)),
+        questions: List<Question>.from(
+            json["questions"].map((x) => Question.fromMap(x))),
         chapterTitle: json["chapter_title"],
         course: json["course"],
       );
 
   Map<String, dynamic> toMap() => {
         "id": id,
-        "questions": List<dynamic>.from(questions.map((x) => x)),
+        "questions": List<dynamic>.from(questions.map((x) => x.toMap())),
         "chapter_title": chapterTitle,
         "course": course,
       };

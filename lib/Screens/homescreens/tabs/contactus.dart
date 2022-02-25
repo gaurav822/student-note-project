@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 import 'package:student_notes/Utils/colors.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../provider/profileprovider.dart';
+
 class ContactUsPage extends StatefulWidget {
-  final String username;
-
-  ContactUsPage(this.username);
-
   @override
   _ContactUsPageState createState() => _ContactUsPageState();
 }
@@ -162,8 +161,9 @@ class _ContactUsPageState extends State<ContactUsPage> {
                 padding: const EdgeInsets.symmetric(horizontal: 30),
                 child: InkWell(
                   onTap: () async {
-                    final toEmail = "no-reply@iscmentor.com";
-                    final subject = "Message from ${widget.username}";
+                    final toEmail = "contact@iscmentor.com";
+                    final subject =
+                        "Message from ${Provider.of<ProfileProvider>(context, listen: false).getUname()}";
                     final url = 'mailto:$toEmail?subject=$subject';
 
                     if (await canLaunch(url)) {

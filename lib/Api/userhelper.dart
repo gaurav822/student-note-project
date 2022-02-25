@@ -2,63 +2,65 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:dio/dio.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 // ignore: implementation_imports
 import 'package:dio/src/form_data.dart' as fd;
+import 'package:provider/provider.dart';
 import 'package:student_notes/Models/user_model.dart';
-import 'package:student_notes/SecuredStorage/securedstorage.dart';
 import 'package:path/path.dart';
+
+import '../provider/profileprovider.dart';
 
 class UserHelper {
   static final String url = dotenv.get('API_URL');
 
-  static Future<String> updateProfilePicture(filePath) async {
+  UserHelper() {
+    //
+  }
+
+  Future<String> updateProfilePicture(filePath, BuildContext context) async {
     String fileName = basename(filePath.path);
-    UserModel userModel = await UserHelper.getUserInfo();
-    String access = await SecuredStorage.getAccess();
+    UserModel userModel = await UserHelper().getUserInfo(context);
     try {
       fd.FormData formData = fd.FormData.fromMap({
         "image": await MultipartFile.fromFile(filePath.path, filename: fileName)
       });
 
-      Map<String, String> requestHeaders = {
-        'Content-type': 'application/json',
-        'Accept': 'application/json',
-        'Authorization': 'Bearer ' + access
-      };
-
-      Dio dio = new Dio(BaseOptions(headers: requestHeaders));
+      Dio dio = new Dio(
+          BaseOptions(headers: _setHeadersForProfile(context: context)));
 
       Response response = await dio.patch(
         '$url/auth/update_profile/${userModel.id}/',
         data: formData,
       );
-
-      return response.statusCode.toString();
+      if (response.statusCode == 200) {
+        Map<String, dynamic> userInfo = response.data;
+        String imageUrl = userInfo["image"];
+        return imageUrl;
+      } else {
+        print("The Error from catch here");
+        return "404";
+      }
     } catch (e) {
-      return e.toString();
+      print("Error from catch here");
+      return "404";
     }
   }
 
-  static Future<String> updateUserInfo(
+  Future<String> updateUserInfo(
       {String fullName,
       String phoneNumber,
       String dateOfBirth,
       String institute,
       String address,
       String coursename,
-      String studylevel}) async {
-    UserModel userModel = await UserHelper.getUserInfo();
-
-    String access = await SecuredStorage.getAccess();
+      String studylevel,
+      BuildContext context}) async {
+    UserModel userModel = await UserHelper().getUserInfo(context);
 
     try {
-      Map<String, String> requestHeaders = {
-        'Accept': 'application/json',
-        'Authorization': 'Bearer ' + access
-      };
-
       var response = await http.patch(
           Uri.parse('$url/auth/update_profile/${userModel.id}/'),
           body: <String, String>{
@@ -70,7 +72,7 @@ class UserHelper {
             "level": studylevel,
             "address": address,
           },
-          headers: requestHeaders);
+          headers: _setHeadersforUpdate(context: context));
 
       print("This is response" + response.toString());
 
@@ -80,18 +82,10 @@ class UserHelper {
     }
   }
 
-  static Future<UserModel> getUserInfo() async {
-    String access = await SecuredStorage.getAccess();
-
-    Map<String, String> requestHeaders = {
-      'Content-type': 'application/json',
-      'Accept': 'application/json',
-      'Authorization': 'Bearer ' + access
-    };
-
+  Future<UserModel> getUserInfo(BuildContext context) async {
     try {
       var response = await http.get(Uri.parse('$url/auth/userinfo/'),
-          headers: requestHeaders);
+          headers: _setHeadersForProfile(context: context));
 
       Map<String, dynamic> data = jsonDecode(response.body);
 
@@ -110,9 +104,23 @@ class UserHelper {
           address: userInfo["address"],
           level: userInfo["level"],
           courseName: userInfo["course_name"]);
+
       return userModel;
     } catch (e) {
       return null;
     }
   }
+
+  _setHeadersforUpdate({BuildContext context}) => {
+        'Accept': 'application/json',
+        'Authorization':
+            'Bearer ${Provider.of<ProfileProvider>(context, listen: false).getAccessToken()}'
+      };
+
+  _setHeadersForProfile({BuildContext context}) => {
+        'Content-type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization':
+            'Bearer ${Provider.of<ProfileProvider>(context, listen: false).getAccessToken()}'
+      };
 }

@@ -9,12 +9,13 @@ import 'package:student_notes/Screens/homescreens/tabs/browsecoursestab.dart';
 import 'package:student_notes/Screens/homescreens/tabs/contactus.dart';
 import 'package:student_notes/Screens/homescreens/tabs/hometab.dart';
 import 'package:student_notes/Screens/homescreens/tabs/mycoursestab.dart';
-import 'package:student_notes/Screens/provider/theme_provider.dart';
 import 'package:student_notes/SecuredStorage/securedstorage.dart';
 import 'package:student_notes/Utils/colors.dart';
 import 'package:student_notes/Utils/internetutils.dart';
 import 'package:student_notes/Widgets/appbar.dart';
 import 'package:student_notes/Widgets/customdrawer.dart';
+import 'package:student_notes/provider/profileprovider.dart';
+import 'package:student_notes/provider/theme_provider.dart';
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({Key key}) : super(key: key);
@@ -24,38 +25,39 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  String _userName, _imageUrl;
   int _currentIndex = 0;
   StreamSubscription subscription;
+  Timer timer;
 
   @override
   void initState() {
     super.initState();
-    findUserName();
-
     findImageUrl();
-
+    updateAccessToken();
     subscription =
         Connectivity().onConnectivityChanged.listen(showConnectivitySnackBar);
   }
 
-  Future<void> findUserName() async {
-    final uname = await SecuredStorage.getUserName();
-    _userName = uname;
-    setState(() {});
+  updateAccessToken() {
+    timer = new Timer.periodic(Duration(minutes: 20), (timer) async {
+      final access = await SecuredStorage.getAccess();
+      if (mounted) {
+        Provider.of<ProfileProvider>(context, listen: false).setAccess(access);
+      }
+    });
   }
 
   Future<void> findImageUrl() async {
-    UserModel userModel = await UserHelper.getUserInfo();
-    String imageUrl = userModel.image;
-    _imageUrl = imageUrl;
-    setState(() {});
+    UserModel userModel = await UserHelper().getUserInfo(context);
+    if (mounted) {
+      Provider.of<ProfileProvider>(context, listen: false)
+          .setProfileImage(userModel.image);
+    }
   }
 
   @override
   void dispose() {
     subscription.cancel();
-    print("Timer is cancelled now");
     super.dispose();
   }
 
@@ -66,9 +68,8 @@ class _MyHomePageState extends State<MyHomePage> {
       child: Consumer<ThemeModel>(
           builder: (context, ThemeModel themeNotifier, child) {
         return Scaffold(
-          appBar:
-              customAppBar(context, _userName, _currentIndex, themeNotifier),
-          drawer: CustomDrawer(_imageUrl),
+          appBar: customAppBar(context, _currentIndex, themeNotifier),
+          drawer: CustomDrawer(),
           bottomNavigationBar: BottomNavigationBar(
             type: BottomNavigationBarType.shifting,
             iconSize: 30,
@@ -109,7 +110,7 @@ class _MyHomePageState extends State<MyHomePage> {
               HomeTab(),
               MyCourse(),
               BrowseCourse(),
-              ContactUsPage(_userName),
+              ContactUsPage(),
             ],
             index: _currentIndex,
           ),
@@ -139,11 +140,11 @@ class _MyHomePageState extends State<MyHomePage> {
     final hasInternet = result != ConnectivityResult.none;
 
     if (!hasInternet) {
-      print("printing from here");
       final message = 'Please check your internet connection';
       Utils.showTopSnackBar(context, message, Colors.red);
     } else {
-      await AuthHelper.updateAccessToken();
+      String token = await AuthHelper.updateAccessToken();
+      Provider.of<ProfileProvider>(context, listen: false).setAccess(token);
     }
   }
 }

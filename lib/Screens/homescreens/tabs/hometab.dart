@@ -7,9 +7,9 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:student_notes/Api/Adhelper.dart';
 import 'package:student_notes/Api/coursehelper.dart';
 import 'package:student_notes/Models/admodel.dart';
-import 'package:student_notes/Models/course_model.dart';
+import 'package:student_notes/Models/course_details_model.dart';
 import 'package:student_notes/cards/AdvertiseCard.dart';
-import 'package:student_notes/Widgets/courseCard.dart';
+import 'package:student_notes/cards/courseCard.dart';
 
 class HomeTab extends StatefulWidget {
   const HomeTab({Key key}) : super(key: key);
@@ -19,160 +19,113 @@ class HomeTab extends StatefulWidget {
 }
 
 class _HomeTabState extends State<HomeTab> {
-  StreamController<AdModel> _streamController1 = StreamController();
-  StreamController<CourseList> _streamController2 = StreamController();
-  StreamController<CourseList> _streamController3 = StreamController();
-  Timer _timer;
-
-  @override
-  void dispose() {
-    super.dispose();
-
-    _timer?.cancel();
-    _streamController1.close();
-    _streamController2.close();
-    _streamController3.close();
-    print("Calling dispose from here");
-  }
+  bool _isLoading = true;
+  bool _isAdLoading = true;
+  CourseList popularCourses, newCourses;
+  AdModel adModels;
 
   @override
   void initState() {
     super.initState();
-
-    // fetchAdandCourseList();
-
-    _timer = new Timer.periodic(Duration(seconds: 3), (timer) {
-      fetchAdandCourseList();
-      // print("timer still running");
-    });
+    fetchAdLists();
+    fetchAdandCourseList();
   }
 
   Future<void> fetchAdandCourseList() async {
-    // CourseList courseList = await CourseHelper.listCourses();
+    _isLoading = true;
     CourseList popularcourseList =
-        await CourseHelper.listCourses(sortByPopular: true);
-    CourseList newcourseList = await CourseHelper.listCourses(sortByNew: true);
+        await CourseHelper().listCourses(sortByPopular: true, context: context);
+    CourseList newcourseList =
+        await CourseHelper().listCourses(sortByNew: true, context: context);
+    popularCourses = popularcourseList;
+    newCourses = newcourseList;
+    _isLoading = false;
+    setState(() {});
+  }
 
-    AdModel adModel = await Adhelper.listAdvertisements();
-
-    if (!_streamController1.isClosed) {
-      _streamController1.sink.add(adModel);
-    }
-
-    if (!_streamController2.isClosed) {
-      _streamController2.sink.add(newcourseList);
-    }
-
-    if (!_streamController3.isClosed) {
-      _streamController3.sink.add(popularcourseList);
-    }
+  Future<void> fetchAdLists() async {
+    AdModel adModel = await Adhelper().listAdvertisements(context);
+    adModels = adModel;
+    _isAdLoading = false;
+    setState(() {});
   }
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      child: Container(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            SizedBox(
-              height: 30,
-            ),
+    return RefreshIndicator(
+      onRefresh: () async {
+        fetchAdandCourseList();
+        setState(() {});
+        return true;
+      },
+      child: SingleChildScrollView(
+        child: Container(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(
+                height: 20,
+              ),
 
-            Row(
-              children: [
-                SizedBox(
-                  width: 20,
-                ),
-                Text("Ads", style: TextStyle(fontSize: 18))
-              ],
-            ),
-            SizedBox(
-              height: 20,
-            ),
-
-            StreamBuilder<AdModel>(
-                stream: _streamController1.stream,
-                builder: (context, snapdata) {
-                  switch (snapdata.connectionState) {
-                    case ConnectionState.waiting:
-                      return Center(
-                        child: CircularProgressIndicator(),
-                      );
-
-                    default:
-                      if (snapdata.hasError) {
-                        return Center(child: Text("Error Loading Data"));
-                      }
-                      if (snapdata.data.results.isBlank) {
-                        return Center(
-                            child: Text(
-                          "No ads available",
-                          style: GoogleFonts.ubuntu(
-                              textStyle: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.red)),
-                        ));
-                      } else {
-                        return Container(
+              _isAdLoading
+                  ? Center(
+                      child: CircularProgressIndicator(),
+                    )
+                  : adModels.results.isEmpty
+                      ? Center(
+                          child: Text("No data Found",
+                              style: GoogleFonts.ubuntu(
+                                  textStyle: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.red))),
+                        )
+                      : Container(
                           height: Get.height * .3,
                           child: Center(
                             child: CarouselSlider.builder(
                               itemBuilder: (BuildContext context, int itemIndex,
                                   int pageViewIndex) {
                                 return AdvertiseCard(
-                                    snapdata.data.results[itemIndex]);
+                                    adModels.results[itemIndex]);
                               },
-                              itemCount: snapdata.data.results.length,
+                              itemCount: adModels.results.length,
                               options: CarouselOptions(
                                   enableInfiniteScroll: false, autoPlay: true),
                             ),
                           ),
-                        );
-                      }
-                  }
-                }),
+                        ),
 
-            SizedBox(
-              height: 40,
-            ),
+              SizedBox(
+                height: 40,
+              ),
 
-            Row(
-              children: [
-                SizedBox(
-                  width: 20,
-                ),
-                Text("New Courses >>", style: TextStyle(fontSize: 18))
-              ],
-            ),
-            SizedBox(
-              height: 20,
-            ),
+              Row(
+                children: [
+                  SizedBox(
+                    width: 20,
+                  ),
+                  Text("New Courses >>", style: TextStyle(fontSize: 18))
+                ],
+              ),
+              SizedBox(
+                height: 20,
+              ),
 
-            StreamBuilder<CourseList>(
-                stream: _streamController2.stream,
-                builder: (context, snapdata) {
-                  switch (snapdata.connectionState) {
-                    case ConnectionState.waiting:
-                      return Center(
-                        child: CircularProgressIndicator(),
-                      );
-
-                    default:
-                      if (snapdata.hasError) {
-                        return Center(child: Text("Error Loading Data"));
-                      }
-                      if (snapdata.data.results.isBlank) {
-                        return Center(
-                            child: Text("No data Found",
-                                style: GoogleFonts.ubuntu(
-                                    textStyle: TextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.red))));
-                      } else {
-                        return Padding(
+              _isLoading
+                  ? Center(
+                      child: CircularProgressIndicator(),
+                    )
+                  : newCourses.results.isEmpty
+                      ? Center(
+                          child: Text("No data Found",
+                              style: GoogleFonts.ubuntu(
+                                  textStyle: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.red))),
+                        )
+                      : Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 10),
                           child: Container(
                             height: 250,
@@ -181,60 +134,48 @@ class _HomeTabState extends State<HomeTab> {
                                   scrollDirection: Axis.horizontal,
                                   shrinkWrap: true,
                                   physics: BouncingScrollPhysics(),
-                                  itemCount: snapdata.data.results.length,
+                                  itemCount: newCourses.results.length,
                                   itemBuilder:
                                       (BuildContext context, int index) {
                                     return CourseCard(
-                                        snapdata.data.results[index]);
+                                        newCourses.results[index]);
                                   }),
                             ),
                           ),
-                        );
-                      }
-                  }
-                }),
+                        ),
 
-            // _rowWiseCourseCarouselWidget(),
+              // _rowWiseCourseCarouselWidget(),
 
-            SizedBox(
-              height: 40,
-            ),
-            Row(
-              children: [
-                SizedBox(
-                  width: 20,
-                ),
-                Text("Popular Courses >>", style: TextStyle(fontSize: 18))
-              ],
-            ),
+              SizedBox(
+                height: 40,
+              ),
+              Row(
+                children: [
+                  SizedBox(
+                    width: 20,
+                  ),
+                  Text("Popular Courses >>", style: TextStyle(fontSize: 18))
+                ],
+              ),
 
-            SizedBox(
-              height: 30,
-            ),
+              SizedBox(
+                height: 30,
+              ),
 
-            StreamBuilder<CourseList>(
-                stream: _streamController3.stream,
-                builder: (context, snapdata) {
-                  switch (snapdata.connectionState) {
-                    case ConnectionState.waiting:
-                      return Center(
-                        child: CircularProgressIndicator(),
-                      );
-
-                    default:
-                      if (snapdata.hasError) {
-                        return Center(child: Text("Error Loading Data"));
-                      }
-                      if (snapdata.data.results.isBlank) {
-                        return Center(
-                            child: Text("No data Found",
-                                style: GoogleFonts.ubuntu(
-                                    textStyle: TextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.red))));
-                      } else {
-                        return Padding(
+              _isLoading
+                  ? Center(
+                      child: CircularProgressIndicator(),
+                    )
+                  : popularCourses.results.isEmpty
+                      ? Center(
+                          child: Text("No data Found",
+                              style: GoogleFonts.ubuntu(
+                                  textStyle: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.red))),
+                        )
+                      : Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 10),
                           child: Container(
                             height: 250,
@@ -243,21 +184,19 @@ class _HomeTabState extends State<HomeTab> {
                                   scrollDirection: Axis.horizontal,
                                   shrinkWrap: true,
                                   physics: BouncingScrollPhysics(),
-                                  itemCount: snapdata.data.results.length,
+                                  itemCount: popularCourses.results.length,
                                   itemBuilder:
                                       (BuildContext context, int index) {
                                     return CourseCard(
-                                        snapdata.data.results[index]);
+                                        popularCourses.results[index]);
                                   }),
                             ),
                           ),
-                        );
-                      }
-                  }
-                })
+                        ),
 
-            // _courses()
-          ],
+              // _courses()
+            ],
+          ),
         ),
       ),
     );
